@@ -1,0 +1,26 @@
+/* La pagina occupa tutto lo schermo, senza margini né scorrimento */
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #021a2b;
+  /* Evita selezioni di testo e menu quando si tiene premuto il dito */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  /* Blocca il "rimbalzo" e i gesti del browser sulla pagina */
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+/* Il canvas riempie tutta la finestra */
+#vasca {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}

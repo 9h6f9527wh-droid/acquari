@@ -24,7 +24,7 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 
 ## Blocco A — L'acquario prende vita (solo grafica)
 
-### ⬜ Fase 0 — Il progetto online
+### 🟡 Fase 0 — Il progetto online
 - Struttura delle cartelle e una pagina che si apre a schermo intero sull'iPad, con uno sfondo d'acqua blu sfumato.
 - Pubblicazione su GitHub Pages: ricevi il link da aprire su Safari.
 - 🎯 *Cosa provi:* apri il link sull'iPad, la vasca riempie lo schermo e si adatta se giri l'iPad.
@@ -134,4 +134,5 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 
 | Fase | Data | Cosa è stato fatto |
 |---|---|---|
-| — | 2026-10-18 | Piano creato, in attesa di approvazione. |
+| — | 2026-10-18 | Piano creato e approvato. |
+| 0 | 2026-10-18 | Creati `index.html`, `css/style.css`, `js/main.js`, `js/disegno/acqua.js`: vasca a schermo intero con acqua sfumata, nitida sugli schermi Retina, si adatta alla rotazione. **Manca:** pubblicazione su GitHub Pages (in attesa del permesso di scrittura su GitHub). |

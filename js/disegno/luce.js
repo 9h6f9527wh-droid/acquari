@@ -2,12 +2,15 @@
 // sfumando verso il fondo. Ondeggiano e cambiano intensità piano piano,
 // come la luce che passa attraverso l'acqua mossa.
 //
-// Trucco per la fluidità: i raggi vengono disegnati su un "foglio" piccolo
-// (un quarto della vasca) e poi ingranditi. L'ingrandimento ammorbidisce
-// i bordi da solo, e disegnare in piccolo costa molto meno all'iPad.
+// Bordi morbidi: ogni raggio è fatto di tre strati sovrapposti, dal più largo
+// e tenue al più stretto. Sommandosi, il centro è luminoso e i bordi sfumano.
+//
+// Trucco per la fluidità: la forma dei raggi non cambia, quindi ognuno viene
+// dipinto UNA volta sola su un suo foglietto. A ogni fotogramma cambiamo solo
+// quanto è luminoso e lo spostiamo di poco: costa molto meno all'iPad.
 
 const NUMERO_RAGGI = 7;
-const RIDUZIONE = 4;
+const STRATI = [1.0, 0.7, 0.4];
 
 function casuale(min, max) {
   return min + Math.random() * (max - min);
@@ -26,52 +29,80 @@ export class RaggiDiLuce {
         larghezzaBasso: casuale(0.08, 0.16),
         lunghezza: casuale(0.6, 0.95), // fin dove arriva, in frazioni dell'altezza
         inclinazione: casuale(0.12, 0.22), // quanto si sposta verso destra scendendo
-        intensita: casuale(0.06, 0.13),
+        intensita: casuale(0.09, 0.15),
         fase: casuale(0, Math.PI * 2),
         velocita: casuale(0.15, 0.4),
+        foglio: document.createElement('canvas'),
       });
     }
     this.tempo = 0;
-    this.foglio = document.createElement('canvas');
-    this.ctxFoglio = this.foglio.getContext('2d');
+    this.larghezza = 0;
+    this.altezza = 0;
   }
 
   aggiorna(dt) {
     this.tempo += dt;
   }
 
-  disegnaRaggi(ctx, larghezza, altezza) {
-    const t = this.tempo;
-    ctx.clearRect(0, 0, larghezza, altezza);
-
+  // Dipinge ogni raggio sul suo foglietto, alla massima intensità.
+  prepara(larghezza, altezza) {
+    const densita = Math.min(window.devicePixelRatio || 1, 2);
     for (const r of this.raggi) {
-      // Intensità che "respira" e piccolo dondolio dell'inclinazione.
-      const respiro = 0.55 + 0.45 * Math.sin(t * r.velocita + r.fase);
-      const alfa = r.intensita * respiro;
-      const inclinazione = r.inclinazione + 0.04 * Math.sin(t * r.velocita * 0.7 + r.fase * 2);
-
-      const xAlto = r.x * larghezza;
       const yBasso = r.lunghezza * altezza;
-      const xBasso = xAlto + inclinazione * yBasso;
       const metaAlto = (r.larghezzaAlto * larghezza) / 2;
       const metaBasso = (r.larghezzaBasso * larghezza) / 2;
+      const spostamento = r.inclinazione * yBasso;
+
+      // Misure del foglietto: quanto basta a contenere il raggio.
+      r.sinistra = r.x * larghezza - metaBasso;
+      r.larghezzaFoglio = Math.ceil(metaBasso * 2 + spostamento);
+      r.altezzaFoglio = Math.ceil(yBasso);
+      r.foglio.width = Math.round(r.larghezzaFoglio * densita);
+      r.foglio.height = Math.round(r.altezzaFoglio * densita);
+
+      const ctx = r.foglio.getContext('2d');
+      ctx.setTransform(densita, 0, 0, densita, 0, 0);
+      ctx.clearRect(0, 0, r.larghezzaFoglio, r.altezzaFoglio);
 
       // La luce è più forte in superficie e svanisce scendendo.
-      const sfumatura = ctx.createLinearGradient(0, 0, 0, yBasso);
       // Tinta calda e verdina, come la luce del sole filtrata dall'acqua.
-      sfumatura.addColorStop(0, `rgba(235, 255, 215, ${alfa})`);
-      sfumatura.addColorStop(0.6, `rgba(180, 240, 215, ${alfa * 0.4})`);
+      const sfumatura = ctx.createLinearGradient(0, 0, 0, yBasso);
+      sfumatura.addColorStop(0, 'rgba(235, 255, 215, 1)');
+      sfumatura.addColorStop(0.6, 'rgba(180, 240, 215, 0.4)');
       sfumatura.addColorStop(1, 'rgba(160, 230, 215, 0)');
-
       ctx.fillStyle = sfumatura;
-      ctx.beginPath();
-      ctx.moveTo(xAlto - metaAlto, 0);
-      ctx.lineTo(xAlto + metaAlto, 0);
-      ctx.lineTo(xBasso + metaBasso, yBasso);
-      ctx.lineTo(xBasso - metaBasso, yBasso);
-      ctx.closePath();
-      ctx.fill();
+      ctx.globalAlpha = 1 / STRATI.length;
+
+      const xAlto = metaBasso; // centro del raggio in cima, nel foglietto
+      const xBasso = xAlto + spostamento;
+      for (const scala of STRATI) {
+        ctx.beginPath();
+        ctx.moveTo(xAlto - metaAlto * scala, 0);
+        ctx.lineTo(xAlto + metaAlto * scala, 0);
+        ctx.lineTo(xBasso + metaBasso * scala, yBasso);
+        ctx.lineTo(xBasso - metaBasso * scala, yBasso);
+        ctx.closePath();
+        ctx.fill();
+      }
     }
+    this.larghezza = larghezza;
+    this.altezza = altezza;
+  }
+
+  disegna(ctx, larghezza, altezza) {
+    if (larghezza !== this.larghezza || altezza !== this.altezza) this.prepara(larghezza, altezza);
+    const t = this.tempo;
+
+    // "lighter" somma la luce all'acqua sotto: i raggi sembrano brillare.
+    ctx.globalCompositeOperation = 'lighter';
+    for (const r of this.raggi) {
+      // Intensità che "respira" e un piccolo dondolio a destra e sinistra.
+      const respiro = 0.65 + 0.35 * Math.sin(t * r.velocita + r.fase);
+      const dondolio = Math.sin(t * r.velocita * 0.7 + r.fase * 2) * larghezza * 0.01;
+      ctx.globalAlpha = r.intensita * respiro;
+      ctx.drawImage(r.foglio, Math.round(r.sinistra + dondolio), 0, r.larghezzaFoglio, r.altezzaFoglio);
+    }
+    ctx.globalAlpha = 1;
 
     // Un leggero bagliore appena sotto la superficie.
     const bagliore = ctx.createLinearGradient(0, 0, 0, altezza * 0.12);
@@ -79,22 +110,6 @@ export class RaggiDiLuce {
     bagliore.addColorStop(1, 'rgba(220, 250, 255, 0)');
     ctx.fillStyle = bagliore;
     ctx.fillRect(0, 0, larghezza, altezza * 0.12);
-  }
-
-  disegna(ctx, larghezza, altezza) {
-    const l = Math.max(1, Math.round(larghezza / RIDUZIONE));
-    const a = Math.max(1, Math.round(altezza / RIDUZIONE));
-    if (this.foglio.width !== l || this.foglio.height !== a) {
-      this.foglio.width = l;
-      this.foglio.height = a;
-    }
-
-    this.disegnaRaggi(this.ctxFoglio, l, a);
-
-    // "lighter" somma la luce all'acqua sotto: i raggi sembrano brillare.
-    ctx.imageSmoothingEnabled = true;
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.drawImage(this.foglio, 0, 0, larghezza, altezza);
     ctx.globalCompositeOperation = 'source-over';
   }
 }

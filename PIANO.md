@@ -37,12 +37,12 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 - Pubblicazione su GitHub Pages: ricevi il link da aprire su Safari.
 - 🎯 *Cosa provi:* apri il link sull'iPad, la vasca riempie lo schermo e si adatta se giri l'iPad.
 
-### 🟡 Fase 1 — L'acqua
+### ✅ Fase 1 — L'acqua
 - Sfumatura di profondità (più chiara in alto, più scura in basso) e raggi di luce che ondeggiano dall'alto.
 - Bolle che salgono, oscillando, da un punto del fondale.
 - 🎯 *Cosa provi:* l'acqua "si muove" anche se ancora vuota.
 
-### ⬜ Fase 2 — Il fondale
+### 🟡 Fase 2 — Il fondale
 - Sabbia con leggere ondulazioni e qualche roccia.
 - Piante che ondeggiano dolcemente come mosse dalla corrente.
 
@@ -146,3 +146,4 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 | 0 | 2026-10-18 | Creati `index.html`, `css/style.css`, `js/main.js`, `js/disegno/acqua.js`: vasca a schermo intero con acqua sfumata, nitida sugli schermi Retina, si adatta alla rotazione. Pubblicato su GitHub Pages: https://9h6f9527wh-droid.github.io/acquari/ — provato sull'iPad. |
 | 1 | 2026-10-18 | Aggiunti `js/disegno/luce.js` (7 raggi di luce inclinati che ondeggiano e "respirano", disegnati in piccolo e ingranditi per avere bordi morbidi senza pesare) e `js/disegno/bolle.js` (aeratore sul fondo a destra con bolle a grappolo che salgono oscillando, più qualche bollicina solitaria; massimo 80 bolle). Il ciclo ora misura il tempo tra un fotogramma e l'altro. In attesa di prova sull'iPad. |
 | 1 | 2026-10-18 | Passaggio allo **stile illustrato/dipinto**: acqua dal turchese al blu-indaco con alone di luce e bordi scuri (dipinta una volta sola e riusata, per leggerezza), raggi caldi che "brillano", bolle con bordo morbido e riflesso, nuove **particelle sospese** (`js/disegno/particelle.js`) a diverse profondità che scintillano. |
+| 2 | 2026-10-18 | Aggiunti `js/disegno/fondale.js` (colline lontane sfumate su due file, sabbia con increspature, granelli e sassolini, 5 rocce morbide con luce dall'alto, muschio e ombra) e `js/disegno/piante.js` (tre tipi: "nastro", "spada" e "rossa"; piante lontane velate e vicine con sfumatura dalla base alla punta; ogni foglia si piega con un'onda che sale verso la punta). Le bolle ora partono dalla sabbia, tra le rocce di destra. `js/util/casuale.js`: rocce e piante sono sempre uguali a ogni avvio. Fluidità: gli strati fermi sono dipinti una volta sola a piena risoluzione e ogni raggio di luce ha il suo foglietto già pronto. In attesa di prova sull'iPad. |

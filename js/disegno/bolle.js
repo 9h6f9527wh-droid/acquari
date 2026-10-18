@@ -15,10 +15,6 @@ export class Bolle {
     this.attesaSolitaria = casuale(1, 3);
   }
 
-  // Punto da cui escono le bolle, in frazioni della vasca.
-  static SORGENTE_X = 0.8;
-  static SORGENTE_Y = 0.97;
-
   creaBolla(x, y, piccola) {
     if (this.bolle.length >= MAX_BOLLE) return;
     const raggio = piccola ? casuale(1.2, 2.5) : casuale(1.5, 5.5);
@@ -36,15 +32,17 @@ export class Bolle {
     });
   }
 
-  aggiorna(dt, larghezza, altezza) {
+  // "fondale" ci dice dov'è la sabbia e dove sta l'aeratore.
+  aggiorna(dt, larghezza, altezza, fondale) {
     // Aeratore: bolle a intervalli irregolari, a volte a "grappolo".
     this.attesaProssima -= dt;
     if (this.attesaProssima <= 0) {
       const quante = Math.random() < 0.25 ? 3 : 1;
       for (let i = 0; i < quante; i++) {
+        const x = fondale.aeratoreX;
         this.creaBolla(
-          Bolle.SORGENTE_X * larghezza + casuale(-4, 4),
-          Bolle.SORGENTE_Y * altezza + i * 8,
+          x * larghezza + casuale(-4, 4),
+          fondale.lineaSabbia(x) * altezza + i * 8,
           false,
         );
       }
@@ -54,7 +52,8 @@ export class Bolle {
     // Bolle solitarie dal fondale.
     this.attesaSolitaria -= dt;
     if (this.attesaSolitaria <= 0) {
-      this.creaBolla(casuale(0.05, 0.95) * larghezza, altezza * 0.98, true);
+      const x = casuale(0.05, 0.95);
+      this.creaBolla(x * larghezza, fondale.lineaSabbia(x) * altezza + 3, true);
       this.attesaSolitaria = casuale(1.5, 4);
     }
 

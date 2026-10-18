@@ -5,6 +5,8 @@ import { Acqua } from './disegno/acqua.js';
 import { RaggiDiLuce } from './disegno/luce.js';
 import { Bolle } from './disegno/bolle.js';
 import { Particelle } from './disegno/particelle.js';
+import { Fondale } from './disegno/fondale.js';
+import { Piante } from './disegno/piante.js';
 
 const canvas = document.getElementById('vasca');
 const ctx = canvas.getContext('2d');
@@ -21,6 +23,8 @@ const acqua = new Acqua();
 const luce = new RaggiDiLuce();
 const particelle = new Particelle();
 const bolle = new Bolle();
+const fondale = new Fondale();
+const piante = new Piante(fondale);
 
 function adattaAlloSchermo() {
   const densita = Math.min(window.devicePixelRatio || 1, MAX_DENSITA);
@@ -38,13 +42,19 @@ function adattaAlloSchermo() {
 function aggiorna(dt) {
   luce.aggiorna(dt);
   particelle.aggiorna(dt);
-  bolle.aggiorna(dt, larghezza, altezza);
+  piante.aggiorna(dt);
+  bolle.aggiorna(dt, larghezza, altezza, fondale);
 }
 
 // L'ordine conta: ciò che è disegnato dopo appare davanti.
+// Dal più lontano al più vicino, come i fogli di un teatrino.
 function disegna() {
   acqua.disegna(ctx, larghezza, altezza);
+  fondale.disegnaLontano(ctx, larghezza, altezza);
+  piante.disegnaLontane(ctx, larghezza, altezza);
+  fondale.disegnaVicino(ctx, larghezza, altezza);
   luce.disegna(ctx, larghezza, altezza);
+  piante.disegnaVicine(ctx, larghezza, altezza);
   particelle.disegna(ctx, larghezza, altezza);
   bolle.disegna(ctx);
 }

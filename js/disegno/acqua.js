@@ -14,12 +14,15 @@ export class Acqua {
   }
 
   dipingi(larghezza, altezza) {
-    // Basta mezza risoluzione: sono solo sfumature morbide.
-    const l = Math.max(1, Math.round(larghezza / 2));
-    const a = Math.max(1, Math.round(altezza / 2));
-    this.foglio.width = l;
-    this.foglio.height = a;
+    // Stessa risoluzione dello schermo: così "incollarlo" costa pochissimo
+    // (ingrandire un foglio più piccolo a ogni fotogramma è più lento).
+    const densita = Math.min(window.devicePixelRatio || 1, 2);
+    this.foglio.width = Math.round(larghezza * densita);
+    this.foglio.height = Math.round(altezza * densita);
     const ctx = this.ctxFoglio;
+    ctx.setTransform(densita, 0, 0, densita, 0, 0);
+    const l = larghezza;
+    const a = altezza;
 
     // 1. Sfumatura di profondità.
     const profondita = ctx.createLinearGradient(0, 0, 0, a);

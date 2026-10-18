@@ -45,6 +45,7 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 ### 🟡 Fase 2 — Il fondale
 - Sabbia con leggere ondulazioni e qualche roccia.
 - Piante che ondeggiano dolcemente come mosse dalla corrente.
+- *Aggiunto su richiesta:* fondale da barriera corallina con coralli, anemoni e alghe marine.
 
 ### ⬜ Fase 3 — Il primo pesce
 - Un pesce semi-realistico: corpo sfumato, coda e pinne che si muovono a ritmo del nuoto.
@@ -147,3 +148,4 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 | 1 | 2026-10-18 | Aggiunti `js/disegno/luce.js` (7 raggi di luce inclinati che ondeggiano e "respirano", disegnati in piccolo e ingranditi per avere bordi morbidi senza pesare) e `js/disegno/bolle.js` (aeratore sul fondo a destra con bolle a grappolo che salgono oscillando, più qualche bollicina solitaria; massimo 80 bolle). Il ciclo ora misura il tempo tra un fotogramma e l'altro. In attesa di prova sull'iPad. |
 | 1 | 2026-10-18 | Passaggio allo **stile illustrato/dipinto**: acqua dal turchese al blu-indaco con alone di luce e bordi scuri (dipinta una volta sola e riusata, per leggerezza), raggi caldi che "brillano", bolle con bordo morbido e riflesso, nuove **particelle sospese** (`js/disegno/particelle.js`) a diverse profondità che scintillano. |
 | 2 | 2026-10-18 | Aggiunti `js/disegno/fondale.js` (colline lontane sfumate su due file, sabbia con increspature, granelli e sassolini, 5 rocce morbide con luce dall'alto, muschio e ombra) e `js/disegno/piante.js` (tre tipi: "nastro", "spada" e "rossa"; piante lontane velate e vicine con sfumatura dalla base alla punta; ogni foglia si piega con un'onda che sale verso la punta). Le bolle ora partono dalla sabbia, tra le rocce di destra. `js/util/casuale.js`: rocce e piante sono sempre uguali a ogni avvio. Fluidità: gli strati fermi sono dipinti una volta sola a piena risoluzione e ogni raggio di luce ha il suo foglietto già pronto. In attesa di prova sull'iPad. |
+| 2 | 2026-10-18 | Fondale da **barriera corallina**: nuovo `js/disegno/coralli.js` con coralli fermi (ramificati, gorgonie a ventaglio, coralli cervello, spugne a tubo) dipinti una volta sola insieme al fondale, più sagome di coralli lontani. In `piante.js` nuovi tipi animati: **anemoni** (corona di 26 tentacoli con punte luminose; due stanno sopra le rocce), **kelp** (alga gigante con foglie alternate e galleggianti dorati), **alga a piuma**; restano nastro e spada. In attesa di prova sull'iPad. |

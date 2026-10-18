@@ -1,13 +1,14 @@
 // Il fondale della vasca, in due strati:
 //  - LONTANO: colline di roccia sfumate nell'azzurro, come viste attraverso
 //    tanta acqua (meno contrasto, colori più chiari).
-//  - VICINO: la sabbia con le sue increspature, sassolini e rocce in primo piano,
-//    illuminate dall'alto.
+//  - VICINO: la sabbia con le sue increspature, sassolini, rocce e coralli
+//    in primo piano, illuminati dall'alto.
 //
 // Il fondale non si muove: lo dipingiamo una volta sola (e di nuovo solo
 // se cambia la misura dello schermo), poi lo incolliamo a ogni fotogramma.
 
 import { creaCasuale } from '../util/casuale.js';
+import { dipingiCorallo } from './coralli.js';
 
 const SEME = 2026;
 
@@ -62,6 +63,25 @@ export class Fondale {
       forma: Array.from({ length: 10 }, () => caso.tra(0.78, 1.12)),
       tinta: caso.tra(-12, 12),
     }));
+
+    // Coralli: tipo, posizione, misura (frazione della vasca) e colore.
+    // "dietro" = dipinto prima delle rocce, così la roccia gli sta davanti.
+    this.coralli = [
+      { tipo: 'ramificato', x: 0.115, misura: 0.22, colore: { h: 345, s: 60, l: 60 } },
+      { tipo: 'ventaglio', x: 0.3, misura: 0.32, colore: { h: 285, s: 45, l: 52 }, dietro: true },
+      { tipo: 'cervello', x: 0.395, misura: 0.065, colore: { h: 62, s: 40, l: 52 } },
+      { tipo: 'tubi', x: 0.555, misura: 0.13, colore: { h: 28, s: 75, l: 55 } },
+      { tipo: 'ramificato', x: 0.645, misura: 0.17, colore: { h: 268, s: 45, l: 66 } },
+      { tipo: 'ventaglio', x: 0.885, misura: 0.26, colore: { h: 355, s: 60, l: 50 }, dietro: true },
+      { tipo: 'cervello', x: 0.255, misura: 0.045, colore: { h: 150, s: 30, l: 48 } },
+    ];
+    // Sagome sbiadite di coralli lontani, sulle colline sullo sfondo.
+    this.coralliLontani = [
+      { tipo: 'ventaglio', x: 0.16, misura: 0.3 },
+      { tipo: 'ramificato', x: 0.47, misura: 0.24 },
+      { tipo: 'tubi', x: 0.62, misura: 0.15 },
+      { tipo: 'ventaglio', x: 0.76, misura: 0.22 },
+    ];
 
     // Sassolini e granelli: tanti puntini, posizioni fisse.
     this.sassolini = Array.from({ length: 70 }, () => ({
@@ -130,6 +150,18 @@ export class Fondale {
       ctx.fillStyle = fila.colore;
       ctx.fill();
     }
+
+    const caso = creaCasuale(SEME + 1);
+    for (const c of this.coralliLontani) {
+      const y = this.lineaLontana(c.x) * a + 6;
+      dipingiCorallo(ctx, caso, c.tipo, c.x * l, y, c.misura * this.misuraBase(l, a), null, true);
+    }
+  }
+
+  // Misura di riferimento per rocce e coralli: così restano proporzionati
+  // sia con l'iPad in orizzontale che in verticale.
+  misuraBase(l, a) {
+    return Math.min(a, l * 1.1);
   }
 
   dipingiVicino(l, a, densita) {
@@ -208,8 +240,16 @@ export class Fondale {
     }
     ctx.restore();
 
-    // --- Rocce ---
-    for (const r of this.rocce) this.dipingiRoccia(ctx, r, l, a);
+    // --- Coralli dietro, rocce, coralli davanti ---
+    // Il seme fisso fa sì che i coralli abbiano sempre la stessa forma.
+    const caso = creaCasuale(SEME + 2);
+    const dipingi = (c) => {
+      const y = this.lineaSabbia(c.x) * a + 4;
+      dipingiCorallo(ctx, caso, c.tipo, c.x * l, y, c.misura * this.misuraBase(l, a), c.colore);
+    };
+    this.coralli.filter((c) => c.dietro).forEach(dipingi);
+    this.cimeRocce = this.rocce.map((r) => this.dipingiRoccia(ctx, r, l, a));
+    this.coralli.filter((c) => !c.dietro).forEach(dipingi);
   }
 
   dipingiRoccia(ctx, roccia, l, a) {
@@ -277,6 +317,10 @@ export class Fondale {
     tracciaMorbida(ctx, punti);
     ctx.stroke();
     ctx.restore();
+
+    // Restituisce il punto più alto: lì sopra possono stare gli anemoni.
+    const cima = Math.min(...punti.map((p) => p.y));
+    return { x: cx, y: cima + raggio * 0.12 };
   }
 
   controllaMisure(larghezza, altezza) {

@@ -18,6 +18,14 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 | **GitHub Pages** | GitHub mette online gratis la cartella del progetto come sito. | Apri un link sull'iPad e giochi. Puoi anche "Aggiungere alla schermata Home" per usarlo come un'app a schermo intero. |
 | **Salvataggio nel browser** (`localStorage`) | Safari tiene in memoria i dati del gioco sul tuo iPad. | Chiudi e riapri: ritrovi il tuo acquario, senza bisogno di account o server. |
 
+## Stile grafico
+
+**Illustrato / dipinto**, ispirato ai giochi indie come *Ori* e *Hollow Knight* (scelto il 2026-10-18):
+- **Forme morbide e contorni puliti**: niente spigoli duri né effetti fotografici.
+- **Profondità a strati**: ciò che è lontano è più sbiadito, azzurrino e sfocato; ciò che è vicino è nitido e più contrastato.
+- **Luce d'atmosfera**: raggi e riflessi che "brillano" e piccole particelle sospese nell'acqua.
+- **Palette armoniosa**: dal turchese della superficie al blu-indaco del fondo; i pesci e le piante sono le uniche macchie di colore vivace.
+
 **Separiamo "simulazione" e "disegno":** una parte del codice calcola cosa succede (fame, soldi, qualità dell'acqua), un'altra parte lo disegna. Così, quando acceleri il tempo, i calcoli vanno più veloci ma la grafica resta fluida.
 
 ---
@@ -137,3 +145,4 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 | — | 2026-10-18 | Piano creato e approvato. |
 | 0 | 2026-10-18 | Creati `index.html`, `css/style.css`, `js/main.js`, `js/disegno/acqua.js`: vasca a schermo intero con acqua sfumata, nitida sugli schermi Retina, si adatta alla rotazione. Pubblicato su GitHub Pages: https://9h6f9527wh-droid.github.io/acquari/ — provato sull'iPad. |
 | 1 | 2026-10-18 | Aggiunti `js/disegno/luce.js` (7 raggi di luce inclinati che ondeggiano e "respirano", disegnati in piccolo e ingranditi per avere bordi morbidi senza pesare) e `js/disegno/bolle.js` (aeratore sul fondo a destra con bolle a grappolo che salgono oscillando, più qualche bollicina solitaria; massimo 80 bolle). Il ciclo ora misura il tempo tra un fotogramma e l'altro. In attesa di prova sull'iPad. |
+| 1 | 2026-10-18 | Passaggio allo **stile illustrato/dipinto**: acqua dal turchese al blu-indaco con alone di luce e bordi scuri (dipinta una volta sola e riusata, per leggerezza), raggi caldi che "brillano", bolle con bordo morbido e riflesso, nuove **particelle sospese** (`js/disegno/particelle.js`) a diverse profondità che scintillano. |

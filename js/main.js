@@ -1,9 +1,10 @@
 // Punto di partenza del gioco: prepara il canvas e avvia il "ciclo"
 // che ridisegna l'acquario a ogni fotogramma (circa 60 volte al secondo).
 
-import { disegnaAcqua } from './disegno/acqua.js';
+import { Acqua } from './disegno/acqua.js';
 import { RaggiDiLuce } from './disegno/luce.js';
 import { Bolle } from './disegno/bolle.js';
+import { Particelle } from './disegno/particelle.js';
 
 const canvas = document.getElementById('vasca');
 const ctx = canvas.getContext('2d');
@@ -16,7 +17,9 @@ let altezza = 0;
 // Disegniamo al massimo a 2× : nitido, ma senza appesantire l'iPad.
 const MAX_DENSITA = 2;
 
+const acqua = new Acqua();
 const luce = new RaggiDiLuce();
+const particelle = new Particelle();
 const bolle = new Bolle();
 
 function adattaAlloSchermo() {
@@ -34,13 +37,15 @@ function adattaAlloSchermo() {
 // dt = secondi passati dal fotogramma precedente.
 function aggiorna(dt) {
   luce.aggiorna(dt);
+  particelle.aggiorna(dt);
   bolle.aggiorna(dt, larghezza, altezza);
 }
 
 // L'ordine conta: ciò che è disegnato dopo appare davanti.
 function disegna() {
-  disegnaAcqua(ctx, larghezza, altezza);
+  acqua.disegna(ctx, larghezza, altezza);
   luce.disegna(ctx, larghezza, altezza);
+  particelle.disegna(ctx, larghezza, altezza);
   bolle.disegna(ctx);
 }
 

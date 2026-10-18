@@ -26,7 +26,7 @@ export class RaggiDiLuce {
         larghezzaBasso: casuale(0.08, 0.16),
         lunghezza: casuale(0.6, 0.95), // fin dove arriva, in frazioni dell'altezza
         inclinazione: casuale(0.12, 0.22), // quanto si sposta verso destra scendendo
-        intensita: casuale(0.1, 0.2),
+        intensita: casuale(0.06, 0.13),
         fase: casuale(0, Math.PI * 2),
         velocita: casuale(0.15, 0.4),
       });
@@ -58,9 +58,10 @@ export class RaggiDiLuce {
 
       // La luce è più forte in superficie e svanisce scendendo.
       const sfumatura = ctx.createLinearGradient(0, 0, 0, yBasso);
-      sfumatura.addColorStop(0, `rgba(210, 245, 255, ${alfa})`);
-      sfumatura.addColorStop(0.6, `rgba(190, 235, 255, ${alfa * 0.4})`);
-      sfumatura.addColorStop(1, 'rgba(180, 230, 255, 0)');
+      // Tinta calda e verdina, come la luce del sole filtrata dall'acqua.
+      sfumatura.addColorStop(0, `rgba(235, 255, 215, ${alfa})`);
+      sfumatura.addColorStop(0.6, `rgba(180, 240, 215, ${alfa * 0.4})`);
+      sfumatura.addColorStop(1, 'rgba(160, 230, 215, 0)');
 
       ctx.fillStyle = sfumatura;
       ctx.beginPath();
@@ -90,7 +91,10 @@ export class RaggiDiLuce {
 
     this.disegnaRaggi(this.ctxFoglio, l, a);
 
+    // "lighter" somma la luce all'acqua sotto: i raggi sembrano brillare.
     ctx.imageSmoothingEnabled = true;
+    ctx.globalCompositeOperation = 'lighter';
     ctx.drawImage(this.foglio, 0, 0, larghezza, altezza);
+    ctx.globalCompositeOperation = 'source-over';
   }
 }

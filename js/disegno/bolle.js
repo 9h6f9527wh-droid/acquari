@@ -69,21 +69,32 @@ export class Bolle {
     this.bolle = this.bolle.filter((b) => b.y > -b.raggio && b.x < larghezza + 10);
   }
 
+  // Stile "dipinto": bordo morbido color acqua, una lunetta di luce
+  // in alto e un riflesso brillante, invece di un contorno bianco netto.
   disegna(ctx) {
-    ctx.lineWidth = 1;
     for (const b of this.bolle) {
-      // Corpo trasparente con un bordo chiaro.
+      const r = b.raggio;
+
+      // Corpo: velo trasparente con bordo tenue.
       ctx.beginPath();
-      ctx.arc(b.x, b.y, b.raggio, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(200, 240, 255, 0.10)';
+      ctx.arc(b.x, b.y, r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(170, 235, 225, 0.12)';
       ctx.fill();
-      ctx.strokeStyle = 'rgba(220, 248, 255, 0.55)';
+      ctx.lineWidth = Math.max(0.8, r * 0.18);
+      ctx.strokeStyle = 'rgba(190, 245, 235, 0.35)';
       ctx.stroke();
 
-      // Piccolo riflesso in alto a sinistra: fa sembrare la bolla rotonda.
+      // Lunetta di luce sul lato in alto.
       ctx.beginPath();
-      ctx.arc(b.x - b.raggio * 0.35, b.y - b.raggio * 0.35, b.raggio * 0.3, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+      ctx.arc(b.x, b.y, r * 0.72, Math.PI * 1.1, Math.PI * 1.7);
+      ctx.lineWidth = Math.max(0.6, r * 0.22);
+      ctx.strokeStyle = 'rgba(235, 255, 245, 0.55)';
+      ctx.stroke();
+
+      // Riflesso brillante.
+      ctx.beginPath();
+      ctx.arc(b.x - r * 0.38, b.y - r * 0.38, Math.max(0.6, r * 0.2), 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 250, 0.85)';
       ctx.fill();
     }
   }

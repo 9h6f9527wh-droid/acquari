@@ -29,7 +29,7 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 - Pubblicazione su GitHub Pages: ricevi il link da aprire su Safari.
 - 🎯 *Cosa provi:* apri il link sull'iPad, la vasca riempie lo schermo e si adatta se giri l'iPad.
 
-### ⬜ Fase 1 — L'acqua
+### 🟡 Fase 1 — L'acqua
 - Sfumatura di profondità (più chiara in alto, più scura in basso) e raggi di luce che ondeggiano dall'alto.
 - Bolle che salgono, oscillando, da un punto del fondale.
 - 🎯 *Cosa provi:* l'acqua "si muove" anche se ancora vuota.
@@ -136,3 +136,4 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 |---|---|---|
 | — | 2026-10-18 | Piano creato e approvato. |
 | 0 | 2026-10-18 | Creati `index.html`, `css/style.css`, `js/main.js`, `js/disegno/acqua.js`: vasca a schermo intero con acqua sfumata, nitida sugli schermi Retina, si adatta alla rotazione. Pubblicato su GitHub Pages: https://9h6f9527wh-droid.github.io/acquari/ — provato sull'iPad. |
+| 1 | 2026-10-18 | Aggiunti `js/disegno/luce.js` (7 raggi di luce inclinati che ondeggiano e "respirano", disegnati in piccolo e ingranditi per avere bordi morbidi senza pesare) e `js/disegno/bolle.js` (aeratore sul fondo a destra con bolle a grappolo che salgono oscillando, più qualche bollicina solitaria; massimo 80 bolle). Il ciclo ora misura il tempo tra un fotogramma e l'altro. In attesa di prova sull'iPad. |

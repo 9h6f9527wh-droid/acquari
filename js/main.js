@@ -2,6 +2,8 @@
 // che ridisegna l'acquario a ogni fotogramma (circa 60 volte al secondo).
 
 import { disegnaAcqua } from './disegno/acqua.js';
+import { RaggiDiLuce } from './disegno/luce.js';
+import { Bolle } from './disegno/bolle.js';
 
 const canvas = document.getElementById('vasca');
 const ctx = canvas.getContext('2d');
@@ -13,6 +15,9 @@ let altezza = 0;
 // Gli schermi Retina dell'iPad hanno 2 o 3 pixel fisici per punto.
 // Disegniamo al massimo a 2× : nitido, ma senza appesantire l'iPad.
 const MAX_DENSITA = 2;
+
+const luce = new RaggiDiLuce();
+const bolle = new Bolle();
 
 function adattaAlloSchermo() {
   const densita = Math.min(window.devicePixelRatio || 1, MAX_DENSITA);
@@ -26,11 +31,27 @@ function adattaAlloSchermo() {
   ctx.setTransform(densita, 0, 0, densita, 0, 0);
 }
 
-function disegna() {
-  disegnaAcqua(ctx, larghezza, altezza);
+// dt = secondi passati dal fotogramma precedente.
+function aggiorna(dt) {
+  luce.aggiorna(dt);
+  bolle.aggiorna(dt, larghezza, altezza);
 }
 
-function ciclo() {
+// L'ordine conta: ciò che è disegnato dopo appare davanti.
+function disegna() {
+  disegnaAcqua(ctx, larghezza, altezza);
+  luce.disegna(ctx, larghezza, altezza);
+  bolle.disegna(ctx);
+}
+
+let istantePrecedente = null;
+
+function ciclo(istante) {
+  // Se la pagina è stata in secondo piano, non facciamo "saltare" tutto in avanti.
+  const dt = istantePrecedente === null ? 0 : Math.min((istante - istantePrecedente) / 1000, 0.1);
+  istantePrecedente = istante;
+
+  aggiorna(dt);
   disegna();
   requestAnimationFrame(ciclo);
 }

@@ -39,10 +39,10 @@ export class Bolle {
     if (this.attesaProssima <= 0) {
       const quante = Math.random() < 0.25 ? 3 : 1;
       for (let i = 0; i < quante; i++) {
-        const x = fondale.aeratoreX;
+        const { x, z } = fondale.aeratore;
         this.creaBolla(
           x * larghezza + casuale(-4, 4),
-          fondale.lineaSabbia(x) * altezza + i * 8,
+          fondale.profondita(x, z) * altezza + i * 8,
           false,
         );
       }
@@ -53,7 +53,7 @@ export class Bolle {
     this.attesaSolitaria -= dt;
     if (this.attesaSolitaria <= 0) {
       const x = casuale(0.05, 0.95);
-      this.creaBolla(x * larghezza, fondale.lineaSabbia(x) * altezza + 3, true);
+      this.creaBolla(x * larghezza, fondale.profondita(x, Math.random()) * altezza, true);
       this.attesaSolitaria = casuale(1.5, 4);
     }
 

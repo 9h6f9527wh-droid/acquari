@@ -3,8 +3,8 @@
 // Ha due aperture:
 //  - la GROTTA, che si apre sulla sabbia: un rifugio buio in cui i pesci
 //    potranno entrare a riposare o a nascondersi;
-//  - il PASSAGGIO, un buco più in alto che attraversa lo scoglio da parte
-//    a parte: i pesci potranno passarci dentro.
+//  - il PASSAGGIO, un tunnel più in alto che attraversa lo scoglio: dentro è
+//    buio, e in fondo si intravede appena la luce dall'altra parte.
 //
 // Il trucco per far "entrare" i pesci: lo scoglio è dipinto su DUE fogli.
 //  1. RETRO:  l'interno buio della grotta e le pareti del passaggio.
@@ -39,8 +39,9 @@ function scalaForma(punti, centro, scala) {
 }
 
 export class Scoglio {
-  constructor(fondale) {
+  constructor(fondale, z) {
     this.fondale = fondale;
+    this.z = z;
     const caso = creaCasuale(4242);
     // Forma del profilo: qualche gobba e un "dente" in cima a sinistra.
     this.gobbe = [
@@ -97,7 +98,8 @@ export class Scoglio {
   prepara(l, a, densita) {
     const M = this.fondale.misuraBase(l, a);
     const cx = l * 0.5;
-    const base = this.fondale.lineaSabbia(0.5) * a + 8;
+    // Lo scoglio poggia sulla sabbia alla sua profondità (vedi fondale.js).
+    const base = this.fondale.profondita(0.5, this.z) * a + 6;
     // Mezza larghezza e altezza: con l'iPad in verticale lo stringiamo,
     // così non va addosso alle rocce ai lati.
     const rx = Math.min(M * 0.22, l * 0.16);
@@ -251,28 +253,27 @@ export class Scoglio {
     }
     ctx.globalCompositeOperation = 'source-over';
 
-    // Passaggio: la parete interna del tunnel, scura in alto e più chiara
-    // in basso (dove arriva la luce da sopra)...
+    // Passaggio: un tunnel buio. In fondo si intravede appena la luce che
+    // entra dall'altra parte: un chiarore verde-azzurro spento, non l'acqua
+    // limpida (attraverso un tunnel di roccia la luce arriva poca e smorzata).
     const p = this.passaggio;
     const parete = ctx.createLinearGradient(0, p.y - p.ry * 1.2, 0, p.y + p.ry * 1.2);
-    parete.addColorStop(0, 'hsl(203, 20%, 14%)');
-    parete.addColorStop(0.6, 'hsl(200, 17%, 24%)');
-    parete.addColorStop(1, 'hsl(195, 15%, 38%)');
+    parete.addColorStop(0, 'hsl(203, 22%, 12%)');
+    parete.addColorStop(0.65, 'hsl(200, 18%, 20%)');
+    parete.addColorStop(1, 'hsl(196, 15%, 32%)'); // labbro inferiore preso dalla luce
     ctx.fillStyle = parete;
     this.tracciaPassaggio(ctx, 1.15);
     ctx.fill();
-    // ...e al centro, sfumando, si apre sull'acqua dietro lo scoglio.
-    ctx.globalCompositeOperation = 'destination-out';
-    const ox = p.x + p.rx * 0.25;
-    const oy = p.y - p.ry * 0.1;
-    const apertura = ctx.createRadialGradient(ox, oy, 0, ox, oy, p.rx * 0.95);
-    apertura.addColorStop(0, 'rgba(0, 0, 0, 1)');
-    apertura.addColorStop(0.6, 'rgba(0, 0, 0, 1)');
-    apertura.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = apertura;
+    const ox = p.x + p.rx * 0.22;
+    const oy = p.y - p.ry * 0.08;
+    const fondo = ctx.createRadialGradient(ox, oy, 0, ox, oy, p.rx * 0.9);
+    fondo.addColorStop(0, 'rgba(70, 125, 130, 0.75)');
+    fondo.addColorStop(0.35, 'rgba(30, 70, 80, 0.6)');
+    fondo.addColorStop(0.75, 'rgba(6, 18, 26, 0.6)');
+    fondo.addColorStop(1, 'rgba(6, 18, 26, 0)');
+    ctx.fillStyle = fondo;
     this.tracciaPassaggio(ctx, 1.15);
     ctx.fill();
-    ctx.globalCompositeOperation = 'source-over';
   }
 
   dipingiFronte(ctx, M) {
@@ -439,6 +440,9 @@ export class Scoglio {
       ctx.ellipse(arco[i].x, arco[i].y - r * 0.4, r * 1.6, r * 0.6, caso.tra(-0.3, 0.3), 0, Math.PI * 2);
       ctx.fill();
     }
+
+    // Sabbia ammucchiata ai piedi dello scoglio (copre anche l'ingresso della grotta).
+    this.fondale.sabbiaAlPiede(ctx, cx, base - 6, rx * 1.8, this.z);
 
     // Decorazioni sullo scoglio: piccoli coralli appoggiati sulla roccia.
     const decora = (tipo, u, misura, colore, affonda = 4) => {

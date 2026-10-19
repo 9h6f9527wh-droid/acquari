@@ -52,13 +52,18 @@ function disegna() {
   acqua.disegna(ctx, larghezza, altezza);
   fondale.disegnaLontano(ctx, larghezza, altezza);
   piante.disegnaLontane(ctx, larghezza, altezza);
+  // Sabbia e oggetti dietro lo scoglio, poi le piante che stanno lì.
   fondale.disegnaVicino(ctx, larghezza, altezza);
+  piante.disegnaDietro(ctx, larghezza, altezza);
   // Scoglio centrale in due fogli: i pesci dentro la tana (dalla Fase 3)
   // verranno disegnati in mezzo, così la roccia davanti li copre.
   fondale.scoglio.disegnaRetro(ctx);
   fondale.scoglio.disegnaFronte(ctx);
+  piante.disegnaSulloScoglio(ctx, larghezza, altezza);
+  // Oggetti e piante davanti allo scoglio, verso di noi.
+  fondale.disegnaPrimoPiano(ctx, larghezza, altezza);
+  piante.disegnaDavanti(ctx, larghezza, altezza);
   luce.disegna(ctx, larghezza, altezza);
-  piante.disegnaVicine(ctx, larghezza, altezza);
   particelle.disegna(ctx, larghezza, altezza);
   bolle.disegna(ctx);
 }

@@ -1,8 +1,16 @@
-// Il fondale della vasca, in due strati:
+// Il fondale della vasca, in tre strati:
 //  - LONTANO: colline di roccia sfumate nell'azzurro, come viste attraverso
 //    tanta acqua (meno contrasto, colori più chiari).
-//  - VICINO: la sabbia con le sue increspature, sassolini, rocce e coralli
-//    in primo piano, illuminati dall'alto.
+//  - VICINO: la sabbia con le sue increspature e gli oggetti "dietro"
+//    (quelli tra il fondo della sabbia e lo scoglio centrale).
+//  - PRIMO PIANO: gli oggetti "davanti" allo scoglio, verso di noi.
+//
+// PROFONDITÀ: ogni roccia, corallo o pianta ha un valore "z":
+//   z = 0 → in fondo, sul bordo lontano della sabbia: più in alto sullo
+//           schermo, più piccolo e più velato d'azzurro;
+//   z = 1 → davanti, vicino al vetro: più in basso, più grande e più nitido.
+// Gli oggetti vengono dipinti dal più lontano al più vicino (come un pittore
+// che dipinge prima lo sfondo), così ognuno copre quelli che ha dietro.
 //
 // Il fondale non si muove: lo dipingiamo una volta sola (e di nuovo solo
 // se cambia la misura dello schermo), poi lo incolliamo a ogni fotogramma.
@@ -12,6 +20,8 @@ import { dipingiCorallo } from './coralli.js';
 import { Scoglio } from './scoglio.js';
 
 const SEME = 2026;
+// Gli oggetti con z più piccolo di questo stanno dietro lo scoglio centrale.
+export const Z_SCOGLIO = 0.36;
 
 function creaFoglio() {
   const foglio = document.createElement('canvas');
@@ -49,14 +59,14 @@ export class Fondale {
     ];
 
     // L'aeratore delle bolle sta tra le due rocce grandi a destra.
-    this.aeratoreX = 0.8;
+    this.aeratore = { x: 0.8, z: 0.6 };
 
-    // Rocce in primo piano: posizione e misura in frazioni, forma a caso.
+    // Rocce: posizione, profondità, misura (in frazioni) e forma a caso.
     this.rocce = [
-      { x: 0.73, misura: 0.12, schiacciata: 0.8 },
-      { x: 0.86, misura: 0.075, schiacciata: 0.75 },
-      { x: 0.2, misura: 0.09, schiacciata: 0.7 },
-      { x: 0.26, misura: 0.045, schiacciata: 0.8 },
+      { x: 0.73, z: 0.5, misura: 0.115, schiacciata: 0.8 },
+      { x: 0.865, z: 0.8, misura: 0.07, schiacciata: 0.75 },
+      { x: 0.2, z: 0.55, misura: 0.085, schiacciata: 0.7 },
+      { x: 0.275, z: 0.88, misura: 0.042, schiacciata: 0.8 },
     ].map((r) => ({
       ...r,
       // Raggi irregolari attorno al centro: ogni roccia ha una forma sua.
@@ -64,14 +74,15 @@ export class Fondale {
       tinta: caso.tra(-12, 12),
     }));
 
-    // Coralli: tipo, posizione, misura (frazione della vasca) e colore.
-    // "dietro" = dipinto prima delle rocce, così la roccia gli sta davanti.
+    // Coralli: tipo, posizione, profondità, misura (frazione della vasca) e colore.
     this.coralli = [
-      { tipo: 'ramificato', x: 0.115, misura: 0.22, colore: { h: 345, s: 60, l: 60 } },
-      { tipo: 'ventaglio', x: 0.3, misura: 0.32, colore: { h: 285, s: 45, l: 52 }, dietro: true },
-      { tipo: 'ramificato', x: 0.655, misura: 0.17, colore: { h: 268, s: 45, l: 66 }, dietro: true },
-      { tipo: 'ventaglio', x: 0.885, misura: 0.26, colore: { h: 355, s: 60, l: 50 }, dietro: true },
-      { tipo: 'cervello', x: 0.255, misura: 0.045, colore: { h: 150, s: 30, l: 48 } },
+      { tipo: 'ventaglio', x: 0.3, z: 0.05, misura: 0.3, colore: { h: 285, s: 45, l: 52 } },
+      { tipo: 'ramificato', x: 0.655, z: 0.12, misura: 0.16, colore: { h: 268, s: 45, l: 66 } },
+      { tipo: 'ventaglio', x: 0.885, z: 0.06, misura: 0.24, colore: { h: 355, s: 60, l: 50 } },
+      { tipo: 'ramificato', x: 0.11, z: 0.62, misura: 0.19, colore: { h: 345, s: 60, l: 60 } },
+      { tipo: 'cervello', x: 0.385, z: 0.9, misura: 0.042, colore: { h: 150, s: 30, l: 48 } },
+      { tipo: 'tubi', x: 0.64, z: 0.93, misura: 0.08, colore: { h: 46, s: 70, l: 55 } },
+      { tipo: 'ramificato', x: 0.93, z: 0.92, misura: 0.12, colore: { h: 18, s: 70, l: 60 } },
     ];
     // Sagome sbiadite di coralli lontani, sulle colline sullo sfondo.
     this.coralliLontani = [
@@ -95,33 +106,48 @@ export class Fondale {
     }));
 
     // Il grande scoglio-casa al centro (ha i suoi fogli: vedi scoglio.js).
-    this.scoglio = new Scoglio(this);
+    this.scoglio = new Scoglio(this, Z_SCOGLIO);
 
     this.lontano = creaFoglio();
     this.vicino = creaFoglio();
+    this.primoPiano = creaFoglio();
+    this.appoggio = creaFoglio(); // foglio di lavoro per velare un oggetto alla volta
     this.larghezza = 0;
     this.altezza = 0;
   }
 
   // Altezza del bordo della sabbia (in frazioni) nel punto x (in frazioni).
   lineaSabbia(x) {
-    let y = 0.855;
+    let y = 0.81;
     for (const o of this.ondeSabbia) y += o.ampiezza * Math.sin(x * o.frequenza + o.fase);
     return y;
   }
 
   // Altezza delle colline lontane.
   lineaLontana(x) {
-    let y = 0.76;
+    let y = 0.72;
     for (const o of this.ondeLontane) y += o.ampiezza * Math.sin(x * o.frequenza + o.fase);
     return y;
+  }
+
+  // Dove poggia sulla sabbia un oggetto in x con profondità z (in frazioni).
+  profondita(x, z) {
+    const bordo = this.lineaSabbia(x);
+    return bordo + z * (1 - bordo) * 0.78;
+  }
+
+  // Quanto è grande un oggetto alla profondità z (davanti = più grande).
+  scalaZ(z) {
+    return 0.72 + 0.48 * z;
   }
 
   prepara(larghezza, altezza) {
     // Stessa risoluzione dello schermo: così incollarli costa pochissimo.
     const densita = Math.min(window.devicePixelRatio || 1, 2);
+    this.misure = { l: larghezza, a: altezza, densita };
     this.dipingiLontano(larghezza, altezza, densita);
     this.dipingiVicino(larghezza, altezza, densita);
+    this.dipingiPrimoPiano(larghezza, altezza, densita);
     this.scoglio.prepara(larghezza, altezza, densita);
     this.larghezza = larghezza;
     this.altezza = altezza;
@@ -166,12 +192,16 @@ export class Fondale {
     return Math.min(a, l * 1.1);
   }
 
-  dipingiVicino(l, a, densita) {
-    const { foglio, ctx } = this.vicino;
+  preparaFoglio({ foglio, ctx }, l, a, densita) {
     foglio.width = Math.round(l * densita);
     foglio.height = Math.round(a * densita);
     ctx.setTransform(densita, 0, 0, densita, 0, 0);
     ctx.clearRect(0, 0, l, a);
+    return ctx;
+  }
+
+  dipingiVicino(l, a, densita) {
+    const ctx = this.preparaFoglio(this.vicino, l, a, densita);
 
     const passi = 80;
     const yBordo = (x) => this.lineaSabbia(x) * a;
@@ -191,12 +221,22 @@ export class Fondale {
     sabbia.addColorStop(1, '#4f5550');
     ctx.fillStyle = sabbia;
     ctx.fill();
+    this.coloreSabbia = sabbia; // lo riusiamo per la sabbia ai piedi degli oggetti
 
     // Velo azzurro: la sabbia è vista attraverso l'acqua.
     ctx.save();
     ctx.clip();
     ctx.fillStyle = 'rgba(30, 95, 115, 0.28)';
     ctx.fillRect(0, cima, l, a - cima);
+
+    // Foschia sul bordo lontano: la sabbia "svanisce" nell'acqua invece
+    // di finire con uno spigolo netto.
+    const foschia = ctx.createLinearGradient(0, cima, 0, cima + (a - cima) * 0.35);
+    foschia.addColorStop(0, 'rgba(35, 100, 125, 0.55)');
+    foschia.addColorStop(1, 'rgba(35, 100, 125, 0)');
+    ctx.fillStyle = foschia;
+    ctx.fillRect(0, cima - 30, l, (a - cima) * 0.35 + 30);
+    this.foschiaSabbia = foschia;
 
     // Increspature: linee chiare e sottili che seguono il bordo.
     ctx.lineCap = 'round';
@@ -242,22 +282,96 @@ export class Fondale {
     }
     ctx.restore();
 
-    // --- Coralli dietro, rocce, coralli davanti ---
-    // Il seme fisso fa sì che i coralli abbiano sempre la stessa forma.
-    const caso = creaCasuale(SEME + 2);
-    const dipingi = (c) => {
-      const y = this.lineaSabbia(c.x) * a + 4;
-      dipingiCorallo(ctx, caso, c.tipo, c.x * l, y, c.misura * this.misuraBase(l, a), c.colore);
-    };
-    this.coralli.filter((c) => c.dietro).forEach(dipingi);
-    this.cimeRocce = this.rocce.map((r) => this.dipingiRoccia(ctx, r, l, a));
-    this.coralli.filter((c) => !c.dietro).forEach(dipingi);
+    // Oggetti dietro lo scoglio.
+    this.cimeRocce = [];
+    this.dipingiOggetti(ctx, l, a, densita, (z) => z < Z_SCOGLIO);
   }
 
-  dipingiRoccia(ctx, roccia, l, a) {
-    const raggio = roccia.misura * Math.min(l, a * 1.4);
+  dipingiPrimoPiano(l, a, densita) {
+    const ctx = this.preparaFoglio(this.primoPiano, l, a, densita);
+    this.dipingiOggetti(ctx, l, a, densita, (z) => z >= Z_SCOGLIO);
+  }
+
+  // Dipinge rocce e coralli che passano il filtro, dal più lontano al più vicino.
+  dipingiOggetti(ctx, l, a, densita, filtro) {
+    const oggetti = [
+      ...this.rocce.map((r, indice) => ({ ...r, roccia: true, indice })),
+      ...this.coralli.map((c, indice) => ({ ...c, indice })),
+    ]
+      .filter((o) => filtro(o.z))
+      .sort((p, q) => p.z - q.z);
+
+    const M = this.misuraBase(l, a);
+    for (const o of oggetti) {
+      // Il seme dipende dall'oggetto: la sua forma è sempre la stessa.
+      const caso = creaCasuale(SEME + 10 + o.indice * 7 + (o.roccia ? 100 : 0));
+      const scala = this.scalaZ(o.z);
+      const x = o.x * l;
+      const y = this.profondita(o.x, o.z) * a;
+      let larghezzaBase;
+      this.conVelo(ctx, l, a, densita, o.z, (c) => {
+        if (o.roccia) {
+          const r = this.dipingiRoccia(c, o, l, a, scala);
+          this.cimeRocce[o.indice] = { x: r.x, y: r.y, z: o.z };
+          larghezzaBase = r.larghezza;
+        } else {
+          const misura = o.misura * M * scala;
+          dipingiCorallo(c, caso, o.tipo, x, y + 2, misura, o.colore);
+          larghezzaBase = misura * (o.tipo === 'cervello' ? 2 : 0.55);
+        }
+      });
+      this.sabbiaAlPiede(ctx, x, y, larghezzaBase, o.z);
+    }
+  }
+
+  // Dipinge un oggetto su un foglio a parte, poi lo vela d'azzurro tanto più
+  // quanto è lontano, e infine lo incolla sullo strato.
+  conVelo(ctx, l, a, densita, z, dipingi) {
+    const lavoro = this.preparaFoglio(this.appoggio, l, a, densita);
+    dipingi(lavoro);
+    const velo = 0.42 * Math.pow(1 - z, 1.4);
+    if (velo > 0.01) {
+      lavoro.globalCompositeOperation = 'source-atop'; // solo dove c'è l'oggetto
+      lavoro.fillStyle = `rgba(40, 112, 135, ${velo})`;
+      lavoro.fillRect(0, 0, l, a);
+      lavoro.globalCompositeOperation = 'source-over';
+    }
+    ctx.drawImage(this.appoggio.foglio, 0, 0, l, a);
+  }
+
+  // Un po' di sabbia ammucchiata alla base: l'oggetto sembra "piantato" nel
+  // fondo invece che appoggiato sopra. Usa lo stesso colore della sabbia.
+  sabbiaAlPiede(ctx, x, y, larghezza, z) {
+    if (!larghezza) return;
+    const { l, a, densita } = this.misure;
+    const rx = larghezza * 0.6;
+    const ry = Math.max(2.5, larghezza * 0.07) * (0.7 + z * 0.6);
+    // Preparo il mucchietto su un foglio a parte: tre ovali sovrapposti
+    // sempre più piccoli, così sfuma ai bordi...
+    const lavoro = this.preparaFoglio(this.appoggio, l, a, densita);
+    lavoro.fillStyle = this.coloreSabbia;
+    for (const [scala, alfa] of [[1, 0.25], [0.75, 0.35], [0.5, 0.45]]) {
+      lavoro.globalAlpha = alfa;
+      lavoro.beginPath();
+      lavoro.ellipse(x, y + ry * 0.5, rx * scala, ry * scala, 0, 0, Math.PI * 2);
+      lavoro.fill();
+    }
+    // ...poi gli do gli stessi strati della sabbia vera (velo e foschia),
+    // così si confonde con il fondo invece di sembrare un disco.
+    lavoro.globalAlpha = 1;
+    lavoro.globalCompositeOperation = 'source-atop';
+    lavoro.fillStyle = 'rgba(30, 95, 115, 0.28)';
+    lavoro.fillRect(0, 0, l, a);
+    lavoro.fillStyle = this.foschiaSabbia;
+    lavoro.fillRect(0, 0, l, a);
+    lavoro.globalCompositeOperation = 'source-over';
+    ctx.drawImage(this.appoggio.foglio, 0, 0, l, a);
+  }
+
+  dipingiRoccia(ctx, roccia, l, a, scala) {
+    const raggio = roccia.misura * Math.min(l, a * 1.4) * scala;
     const cx = roccia.x * l;
-    const base = this.lineaSabbia(roccia.x) * a + raggio * 0.35; // un po' affondata
+    const base = this.profondita(roccia.x, roccia.z) * a + raggio * 0.15; // un po' affondata
     const cy = base - raggio * roccia.schiacciata * 0.6;
 
     // Ombra morbida sulla sabbia.
@@ -322,7 +436,7 @@ export class Fondale {
 
     // Restituisce il punto più alto: lì sopra possono stare gli anemoni.
     const cima = Math.min(...punti.map((p) => p.y));
-    return { x: cx, y: cima + raggio * 0.12 };
+    return { x: cx, y: cima + raggio * 0.12, larghezza: raggio * 2 };
   }
 
   controllaMisure(larghezza, altezza) {
@@ -337,5 +451,10 @@ export class Fondale {
   disegnaVicino(ctx, larghezza, altezza) {
     this.controllaMisure(larghezza, altezza);
     ctx.drawImage(this.vicino.foglio, 0, 0, larghezza, altezza);
+  }
+
+  disegnaPrimoPiano(ctx, larghezza, altezza) {
+    this.controllaMisure(larghezza, altezza);
+    ctx.drawImage(this.primoPiano.foglio, 0, 0, larghezza, altezza);
   }
 }

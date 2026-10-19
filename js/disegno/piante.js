@@ -11,11 +11,23 @@
 //  - "piuma":   alga a piuma: steli con tante foglioline ai lati
 //  - "anemone": colonna con una corona di tentacoli dalle punte luminose
 //
-// Due strati: LONTANE (sagome velate, dietro) e VICINE (colori pieni, davanti).
+// Strati:
+//  - LONTANE: sagome velate sulle colline in fondo;
+//  - VICINE: sulla sabbia, ognuna con la sua profondità "z" (vedi fondale.js).
+//    Quelle con z piccolo stanno dietro lo scoglio, sono più piccole e velate;
+//    quelle con z grande stanno davanti, più grandi e dai colori pieni.
 
 import { creaCasuale } from '../util/casuale.js';
+import { Z_SCOGLIO } from './fondale.js';
 
 const VELO = 'hsla(188, 32%, 38%, 0.42)';
+
+// Colore visto attraverso l'acqua: più è lontano (z piccolo), più si avvicina
+// all'azzurro dell'acqua. Stessa regola usata per rocce e coralli.
+function velaColore(c, z) {
+  const f = 0.42 * Math.pow(1 - z, 1.4);
+  return { h: c.h + (190 - c.h) * f * 0.5, s: c.s * (1 - f * 0.7), l: c.l + (42 - c.l) * f };
+}
 
 function hsl(c, piuLuce = 0, alfa = 1) {
   return `hsla(${c.h}, ${c.s}%, ${Math.min(92, c.l + piuLuce)}%, ${alfa})`;
@@ -145,20 +157,21 @@ export class Piante {
     this.tempo = 0;
     const caso = creaCasuale(77);
 
-    // Disposizione delle piante vicine. "roccia" = sta sopra quella roccia
-    // (indice nella lista delle rocce del fondale) invece che sulla sabbia;
+    // Disposizione delle piante vicine, con la loro profondità z.
+    // "roccia" = sta sopra quella roccia (indice nella lista del fondale);
     // "scoglio" = sta in cima al grande scoglio centrale.
     const vicine = [
-      { tipo: 'kelp', x: 0.035, altezza: 0.62, colore: { h: 42, s: 50, l: 36 } },
-      { tipo: 'nastro', x: 0.075, altezza: 0.3, colore: { h: 105, s: 45, l: 38 } },
-      { tipo: 'anemone', roccia: 2, misura: 0.085, colore: { h: 318, s: 55, l: 62 }, punte: { h: 300, s: 90, l: 80 } },
-      { tipo: 'piuma', x: 0.35, altezza: 0.25, colore: { h: 110, s: 60, l: 42 } },
-      { tipo: 'spada', x: 0.585, altezza: 0.13, colore: { h: 120, s: 40, l: 32 } },
+      { tipo: 'kelp', x: 0.035, z: 0.15, altezza: 0.62, colore: { h: 42, s: 50, l: 36 } },
+      { tipo: 'kelp', x: 0.965, z: 0.1, altezza: 0.7, colore: { h: 48, s: 48, l: 38 } },
+      { tipo: 'piuma', x: 0.35, z: 0.2, altezza: 0.25, colore: { h: 110, s: 60, l: 42 } },
+      { tipo: 'nastro', x: 0.62, z: 0.25, altezza: 0.28, colore: { h: 95, s: 45, l: 40 } },
+      { tipo: 'piuma', x: 0.91, z: 0.3, altezza: 0.21, colore: { h: 135, s: 55, l: 40 } },
       { tipo: 'anemone', scoglio: true, misura: 0.07, colore: { h: 150, s: 45, l: 50 }, punte: { h: 290, s: 80, l: 72 } },
-      { tipo: 'nastro', x: 0.62, altezza: 0.28, colore: { h: 95, s: 45, l: 40 } },
       { tipo: 'anemone', roccia: 0, misura: 0.1, colore: { h: 28, s: 70, l: 58 }, punte: { h: 45, s: 95, l: 75 } },
-      { tipo: 'piuma', x: 0.91, altezza: 0.21, colore: { h: 135, s: 55, l: 40 } },
-      { tipo: 'kelp', x: 0.965, altezza: 0.7, colore: { h: 48, s: 48, l: 38 } },
+      { tipo: 'anemone', roccia: 2, misura: 0.085, colore: { h: 318, s: 55, l: 62 }, punte: { h: 300, s: 90, l: 80 } },
+      { tipo: 'spada', x: 0.585, z: 0.7, altezza: 0.13, colore: { h: 120, s: 40, l: 32 } },
+      { tipo: 'nastro', x: 0.075, z: 0.85, altezza: 0.3, colore: { h: 105, s: 45, l: 38 } },
+      { tipo: 'nastro', x: 0.79, z: 0.95, altezza: 0.15, colore: { h: 100, s: 50, l: 40 } },
     ];
     const lontane = [
       { tipo: 'kelp', x: 0.08, altezza: 0.5 },
@@ -172,13 +185,21 @@ export class Piante {
 
     const crea = (p, lontana) => {
       const pianta = { ...p, lontana, x: p.x !== undefined ? p.x + caso.tra(-0.01, 0.01) : undefined };
+      // Profondità: quella della roccia o dello scoglio su cui sta, se ce l'ha.
+      if (p.scoglio) pianta.z = Z_SCOGLIO;
+      else if (p.roccia !== undefined) pianta.z = fondale.rocce[p.roccia].z;
+      if (!lontana) {
+        pianta.colore = velaColore(p.colore, pianta.z);
+        if (p.punte) pianta.punte = velaColore(p.punte, pianta.z);
+      }
       if (p.tipo === 'nastro' || p.tipo === 'spada') pianta.foglie = creaCiuffo(caso, p.tipo, p.altezza);
       if (p.tipo === 'kelp') pianta.kelp = creaKelp(caso, p.altezza);
       if (p.tipo === 'piuma') pianta.steli = creaPiuma(caso, p.altezza);
       if (p.tipo === 'anemone') pianta.tentacoli = creaAnemone(caso, p.misura);
       return pianta;
     };
-    this.vicine = vicine.map((p) => crea(p, false));
+    // Dal più lontano al più vicino.
+    this.vicine = vicine.map((p) => crea(p, false)).sort((p, q) => p.z - q.z);
     this.lontane = lontane.map((p) => crea(p, true));
   }
 
@@ -351,43 +372,61 @@ export class Piante {
 
   // ---------- Strati ----------
 
-  disegnaStrato(ctx, piante, larghezza, altezza, lineaFondo) {
+  disegnaStrato(ctx, piante, larghezza, altezza) {
+    const fondale = this.fondale;
     for (const p of piante) {
       let x;
       let y;
       if (p.scoglio) {
-        x = this.fondale.scoglio.appoggio.x;
-        y = this.fondale.scoglio.appoggio.y;
+        x = fondale.scoglio.appoggio.x;
+        y = fondale.scoglio.appoggio.y;
       } else if (p.roccia !== undefined) {
-        const cima = this.fondale.cimeRocce[p.roccia];
+        const cima = fondale.cimeRocce[p.roccia];
         x = cima.x;
         y = cima.y;
+      } else if (p.lontana) {
+        x = p.x * larghezza;
+        y = fondale.lineaLontana(p.x) * altezza + 4;
       } else {
         x = p.x * larghezza;
-        y = lineaFondo(p.x) * altezza + (p.lontana ? 4 : 6);
+        y = fondale.profondita(p.x, p.z) * altezza + 3;
       }
+      // Le misure sono in frazioni dell'altezza; più è vicina, più è grande.
+      const scalaZ = p.lontana ? 1 : fondale.scalaZ(p.z);
+      const scala = altezza * scalaZ;
 
       if (!p.lontana && (p.tipo === 'nastro' || p.tipo === 'spada')) {
         // Ciuffi: scuri alla base e chiari in punta.
-        const cima = y - p.altezza * altezza;
+        const cima = y - p.altezza * scala;
         p.sfumatura = ctx.createLinearGradient(0, y, 0, cima);
         p.sfumatura.addColorStop(0, hsl({ ...p.colore, h: p.colore.h + 10 }, -p.colore.l * 0.45));
         p.sfumatura.addColorStop(0.5, hsl(p.colore));
         p.sfumatura.addColorStop(1, hsl({ ...p.colore, h: p.colore.h - 12, s: p.colore.s + 10 }, 14));
       }
 
-      if (p.tipo === 'nastro' || p.tipo === 'spada') this.disegnaCiuffo(ctx, p, x, y, altezza);
-      else if (p.tipo === 'kelp') this.disegnaKelp(ctx, p, x, y, altezza);
-      else if (p.tipo === 'piuma') this.disegnaPiuma(ctx, p, x, y, altezza);
-      else if (p.tipo === 'anemone') this.disegnaAnemone(ctx, p, x, y, this.fondale.misuraBase(larghezza, altezza));
+      if (p.tipo === 'nastro' || p.tipo === 'spada') this.disegnaCiuffo(ctx, p, x, y, scala);
+      else if (p.tipo === 'kelp') this.disegnaKelp(ctx, p, x, y, scala);
+      else if (p.tipo === 'piuma') this.disegnaPiuma(ctx, p, x, y, scala);
+      else if (p.tipo === 'anemone') this.disegnaAnemone(ctx, p, x, y, fondale.misuraBase(larghezza, altezza) * scalaZ);
     }
   }
 
   disegnaLontane(ctx, larghezza, altezza) {
-    this.disegnaStrato(ctx, this.lontane, larghezza, altezza, (x) => this.fondale.lineaLontana(x));
+    this.disegnaStrato(ctx, this.lontane, larghezza, altezza);
   }
 
-  disegnaVicine(ctx, larghezza, altezza) {
-    this.disegnaStrato(ctx, this.vicine, larghezza, altezza, (x) => this.fondale.lineaSabbia(x));
+  // Piante sulla sabbia dietro lo scoglio.
+  disegnaDietro(ctx, larghezza, altezza) {
+    this.disegnaStrato(ctx, this.vicine.filter((p) => p.z < Z_SCOGLIO), larghezza, altezza);
+  }
+
+  // Piante in cima allo scoglio.
+  disegnaSulloScoglio(ctx, larghezza, altezza) {
+    this.disegnaStrato(ctx, this.vicine.filter((p) => p.scoglio), larghezza, altezza);
+  }
+
+  // Piante davanti allo scoglio (anche quelle sopra le rocce in primo piano).
+  disegnaDavanti(ctx, larghezza, altezza) {
+    this.disegnaStrato(ctx, this.vicine.filter((p) => p.z > Z_SCOGLIO), larghezza, altezza);
   }
 }

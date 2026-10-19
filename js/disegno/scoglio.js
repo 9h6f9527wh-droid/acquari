@@ -452,6 +452,8 @@ export class Scoglio {
     decora('ramificato', -0.42, 0.09, { h: 12, s: 70, l: 62 });
     decora('cervello', 0.62, 0.035, { h: 62, s: 40, l: 52 });
     decora('tubi', 0.82, 0.07, { h: 278, s: 40, l: 55 }, 10);
+    // Una stella marina appoggiata sul fianco dello scoglio.
+    dipingiCorallo(ctx, caso, 'stella', cx + rx * 0.58, base - H * 0.28, M * 0.06, { h: 14, s: 75, l: 55 });
     // Coralli alla base, davanti allo scoglio.
     dipingiCorallo(ctx, caso, 'cervello', cx + rx * 0.4, base - 2, M * 0.05, { h: 150, s: 30, l: 46 });
     dipingiCorallo(ctx, caso, 'tubi', cx - rx * 0.86, base - 1, M * 0.08, { h: 28, s: 75, l: 55 });

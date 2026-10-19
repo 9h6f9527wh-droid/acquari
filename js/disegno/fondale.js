@@ -1,6 +1,7 @@
 // Il fondale della vasca, in tre strati:
 //  - LONTANO: colline di roccia sfumate nell'azzurro, come viste attraverso
-//    tanta acqua (meno contrasto, colori più chiari).
+//    tanta acqua (meno contrasto, colori più chiari), e un grande relitto
+//    che si intravede appena nella foschia.
 //  - VICINO: la sabbia con le sue increspature e gli oggetti "dietro"
 //    (quelli tra il fondo della sabbia e lo scoglio centrale).
 //  - PRIMO PIANO: gli oggetti "davanti" allo scoglio, verso di noi.
@@ -83,6 +84,10 @@ export class Fondale {
       { tipo: 'cervello', x: 0.385, z: 0.9, misura: 0.042, colore: { h: 150, s: 30, l: 48 } },
       { tipo: 'tubi', x: 0.64, z: 0.93, misura: 0.08, colore: { h: 46, s: 70, l: 55 } },
       { tipo: 'ramificato', x: 0.93, z: 0.92, misura: 0.12, colore: { h: 18, s: 70, l: 60 } },
+      // Poche conchiglie sparse, senza esagerare.
+      { tipo: 'ventaglietto', x: 0.19, z: 0.97, misura: 0.035, colore: { h: 20, s: 45, l: 72 } },
+      { tipo: 'chiocciola', x: 0.555, z: 0.98, misura: 0.03, colore: { h: 35, s: 40, l: 66 } },
+      { tipo: 'ventaglietto', x: 0.83, z: 0.9, misura: 0.026, colore: { h: 340, s: 30, l: 74 } },
     ];
     // Sagome sbiadite di coralli lontani, sulle colline sullo sfondo.
     this.coralliLontani = [
@@ -165,7 +170,9 @@ export class Fondale {
       { spostamento: -0.05, colore: 'rgba(40, 110, 135, 0.55)', scala: 1.3 },
       { spostamento: 0.0, colore: 'rgba(22, 78, 105, 0.75)', scala: 1 },
     ];
-    for (const fila of file) {
+    file.forEach((fila, n) => {
+      // Il relitto sta tra le due file di colline: quella davanti gli copre la base.
+      if (n === 1) this.dipingiRelitto(ctx, l, a, densita);
       ctx.beginPath();
       ctx.moveTo(0, a);
       for (let i = 0; i <= 60; i++) {
@@ -177,13 +184,110 @@ export class Fondale {
       ctx.closePath();
       ctx.fillStyle = fila.colore;
       ctx.fill();
-    }
+    });
 
     const caso = creaCasuale(SEME + 1);
     for (const c of this.coralliLontani) {
       const y = this.lineaLontana(c.x) * a + 6;
       dipingiCorallo(ctx, caso, c.tipo, c.x * l, y, c.misura * this.misuraBase(l, a), null, true);
     }
+  }
+
+  // Un grande relitto di nave, solo come sagoma scura: "vedo e non vedo".
+  // È inclinato, mezzo affondato, con gli alberi spezzati. In basso sfuma
+  // nella foschia, così sembra lontano e misterioso.
+  dipingiRelitto(ctx, l, a, densita) {
+    const lavoro = this.preparaFoglio(this.appoggio, l, a, densita);
+    const W = Math.min(l * 0.42, a * 0.75);
+    const H = W * 0.3;
+    const x0 = l * 0.72;
+    const y0 = this.lineaLontana(0.72) * a - H * 0.05; // poggia sul fondale, un po' affondato
+
+    lavoro.save();
+    lavoro.translate(x0, y0);
+    lavoro.rotate(-0.1);
+    lavoro.fillStyle = 'rgb(6, 24, 38)';
+    lavoro.strokeStyle = 'rgb(6, 24, 38)';
+    lavoro.lineCap = 'round';
+    const P = (x, y) => [x * W, y * H];
+
+    // Scafo: prua a sinistra (alta e appuntita), poppa a destra, e il ponte
+    // spaccato a metà.
+    lavoro.beginPath();
+    lavoro.moveTo(...P(-0.53, -1.05));
+    lavoro.quadraticCurveTo(...P(-0.45, -0.3), ...P(-0.28, 0.05));
+    lavoro.lineTo(...P(0.36, 0.05));
+    lavoro.quadraticCurveTo(...P(0.47, -0.1), ...P(0.5, -0.95));
+    lavoro.lineTo(...P(0.42, -0.95));
+    lavoro.lineTo(...P(0.4, -1.3)); // cabina di poppa, mezza crollata
+    lavoro.lineTo(...P(0.33, -1.38));
+    lavoro.lineTo(...P(0.27, -1.22));
+    lavoro.lineTo(...P(0.22, -1.28));
+    lavoro.lineTo(...P(0.19, -0.92));
+    // Squarcio nel ponte.
+    lavoro.lineTo(...P(0.08, -0.88));
+    lavoro.lineTo(...P(0.04, -0.62));
+    lavoro.lineTo(...P(-0.01, -0.8));
+    lavoro.lineTo(...P(-0.06, -0.55));
+    lavoro.lineTo(...P(-0.11, -0.85));
+    lavoro.lineTo(...P(-0.16, -0.95));
+    lavoro.closePath();
+    lavoro.fill();
+
+    // Alberi: uno lungo inclinato, uno spezzato.
+    lavoro.lineWidth = Math.max(2, W * 0.012);
+    lavoro.beginPath();
+    lavoro.moveTo(...P(-0.25, -1));
+    lavoro.lineTo(...P(-0.36, -2.6));
+    lavoro.moveTo(...P(-0.44, -2.2));
+    lavoro.lineTo(...P(-0.2, -2.3));
+    lavoro.moveTo(...P(0.3, -1.3));
+    lavoro.lineTo(...P(0.36, -1.85));
+    lavoro.stroke();
+    // Cime e sartie che pendono.
+    lavoro.lineWidth = Math.max(0.8, W * 0.003);
+    lavoro.beginPath();
+    lavoro.moveTo(...P(-0.36, -2.6));
+    lavoro.quadraticCurveTo(...P(-0.47, -1.7), ...P(-0.52, -1.05));
+    lavoro.moveTo(...P(-0.35, -2.4));
+    lavoro.quadraticCurveTo(...P(-0.15, -1.6), ...P(0.05, -0.9));
+    lavoro.moveTo(...P(-0.2, -2.3));
+    lavoro.quadraticCurveTo(...P(-0.18, -2.0), ...P(-0.22, -1.75));
+    lavoro.stroke();
+
+    // Oblò e falle: buchi da cui si intravede l'acqua.
+    lavoro.globalCompositeOperation = 'destination-out';
+    lavoro.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    for (const [x, y, r] of [[-0.36, -0.55, 0.06], [-0.24, -0.5, 0.06], [-0.12, -0.45, 0.06], [0.24, -0.6, 0.06], [0.33, -0.62, 0.06], [0.08, -0.3, 0.12]]) {
+      lavoro.beginPath();
+      lavoro.arc(x * W, y * H, r * H, 0, Math.PI * 2);
+      lavoro.fill();
+    }
+    lavoro.restore();
+
+    // Foschia: la sagoma è velata e in basso si perde nell'acqua.
+    lavoro.globalCompositeOperation = 'source-atop';
+    const nebbia = lavoro.createLinearGradient(0, y0 - H * 2.8, 0, y0 + H * 0.1);
+    nebbia.addColorStop(0, 'rgba(40, 110, 135, 0.45)');
+    nebbia.addColorStop(0.55, 'rgba(40, 110, 135, 0.45)');
+    nebbia.addColorStop(1, 'rgba(40, 110, 135, 0.85)');
+    lavoro.fillStyle = nebbia;
+    lavoro.fillRect(0, 0, l, a);
+    lavoro.globalCompositeOperation = 'source-over';
+
+    // Contorni morbidi: incolliamo la sagoma più volte, spostata di poco in
+    // ogni direzione e molto trasparente. È come guardarla un po' sfocata.
+    ctx.save();
+    const passi = 8;
+    const raggio = Math.max(1.5, W * 0.004);
+    ctx.globalAlpha = 0.16;
+    for (let i = 0; i < passi; i++) {
+      const ang = (i / passi) * Math.PI * 2;
+      ctx.drawImage(this.appoggio.foglio, Math.cos(ang) * raggio, Math.sin(ang) * raggio, l, a);
+    }
+    ctx.globalAlpha = 0.5;
+    ctx.drawImage(this.appoggio.foglio, 0, 0, l, a);
+    ctx.restore();
   }
 
   // Misura di riferimento per rocce e coralli: così restano proporzionati
@@ -317,7 +421,8 @@ export class Fondale {
         } else {
           const misura = o.misura * M * scala;
           dipingiCorallo(c, caso, o.tipo, x, y + 2, misura, o.colore);
-          larghezzaBase = misura * (o.tipo === 'cervello' ? 2 : 0.55);
+          const piatti = { cervello: 2, ventaglietto: 1.1, chiocciola: 1 };
+          larghezzaBase = misura * (piatti[o.tipo] || 0.55);
         }
       });
       this.sabbiaAlPiede(ctx, x, y, larghezzaBase, o.z);

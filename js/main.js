@@ -7,6 +7,7 @@ import { Bolle } from './disegno/bolle.js';
 import { Particelle } from './disegno/particelle.js';
 import { Fondale } from './disegno/fondale.js';
 import { Piante } from './disegno/piante.js';
+import { Caustiche } from './disegno/caustiche.js';
 
 const canvas = document.getElementById('vasca');
 const ctx = canvas.getContext('2d');
@@ -25,6 +26,7 @@ const particelle = new Particelle();
 const bolle = new Bolle();
 const fondale = new Fondale();
 const piante = new Piante(fondale);
+const caustiche = new Caustiche(fondale);
 
 function adattaAlloSchermo() {
   const densita = Math.min(window.devicePixelRatio || 1, MAX_DENSITA);
@@ -43,6 +45,7 @@ function aggiorna(dt) {
   luce.aggiorna(dt);
   particelle.aggiorna(dt);
   piante.aggiorna(dt);
+  caustiche.aggiorna(dt);
   bolle.aggiorna(dt, larghezza, altezza, fondale);
 }
 
@@ -54,6 +57,8 @@ function disegna() {
   piante.disegnaLontane(ctx, larghezza, altezza);
   // Sabbia e oggetti dietro lo scoglio, poi le piante che stanno lì.
   fondale.disegnaVicino(ctx, larghezza, altezza);
+  // La rete di luce sulla sabbia (gli oggetti davanti la coprono, come le ombre).
+  caustiche.disegna(ctx, larghezza, altezza);
   piante.disegnaDietro(ctx, larghezza, altezza);
   // Scoglio centrale in due fogli: i pesci dentro la tana (dalla Fase 3)
   // verranno disegnati in mezzo, così la roccia davanti li copre.

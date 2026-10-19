@@ -43,11 +43,16 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 - Bolle che salgono, oscillando, da un punto del fondale.
 - 🎯 *Cosa provi:* l'acqua "si muove" anche se ancora vuota.
 
-### 🟡 Fase 2 — Il fondale
+### ✅ Fase 2 — Il fondale
 - Sabbia con leggere ondulazioni e qualche roccia.
 - Piante che ondeggiano dolcemente come mosse dalla corrente.
 - *Aggiunto su richiesta:* fondale da barriera corallina con coralli, anemoni e alghe marine.
 - *Aggiunto su richiesta:* grande scoglio-casa al centro, con una grotta e un passaggio in cui i pesci potranno entrare (il comportamento arriverà con i pesci).
+
+### 🟡 Fase 2b — Rifiniture dell'ambiente *(aggiunta su richiesta)*
+- **Caustiche**: i riflessi di luce a rete che ondeggiano sulla sabbia.
+- **Grande relitto** sullo sfondo: solo una sagoma scura nella foschia, "vedo e non vedo".
+- Pochi dettagli sul fondo, senza esagerare: una stella marina e qualche conchiglia.
 
 ### ⬜ Fase 3 — Il primo pesce
 - *Da preparare qui:* il pesce sa dov'è la tana nello scoglio (`scoglio.tana`) e ogni tanto ci entra o ci passa attraverso.
@@ -59,13 +64,23 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 - Alcune specie nuotano **in banco**: restano vicine e si muovono insieme.
 - 🎯 *Cosa provi:* controlliamo che resti fluido con 30-40 pesci.
 
+### ⬜ Fase 4b — Il banco lontano *(aggiunta su richiesta)*
+- Ogni tanto un banco di pesci passa in lontananza, come sagome velate nella foschia.
+
 ---
 
 ## Blocco B — L'ecosistema
 
+> **Non solo pesci:** tra gli abitanti della vasca ci saranno anche altri animali (per esempio paguri, gamberetti, lumache, stelle marine). Quali e quando, lo decidiamo insieme man mano.
+
 ### ⬜ Fase 5 — Il tempo
 - Un orologio del gioco (giorni che passano) e i pulsanti **pausa / 1× / 2× / 5×**.
 - Da qui in poi tutto quello che "invecchia" o "consuma" segue questo orologio.
+- **Menu a tendina**: i comandi (e più avanti soldi, negozio, statistiche) stanno in un menu che si apre e si chiude, così puoi nasconderlo e ammirare la vasca per intero.
+
+### ⬜ Fase 5b — Giorno e notte *(aggiunta su richiesta)*
+- La luce segue l'orologio del gioco: alba, giorno, tramonto e notte.
+- Di notte l'acqua diventa blu scuro e brillano di più le lucine della grotta e le punte degli anemoni.
 
 ### ⬜ Fase 6 — Fame e cibo
 - Tocchi la vasca e cadono scaglie di cibo; i pesci le vedono e le inseguono.
@@ -155,3 +170,4 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 | 2 | 2026-10-19 | Nuovo `js/disegno/scoglio.js`: **scoglio-casa al centro** con una **grotta** buia (con lucine) e un **passaggio** che lo attraversa. È dipinto su due fogli (interno dietro, roccia davanti con i buchi), così i pesci potranno stare "dentro": verranno disegnati in mezzo ai due fogli. Sopra ha coralli e un anemone; posizioni di grotta e passaggio salvate in `scoglio.tana` per i pesci. Si adatta all'iPad in verticale. |
 | 2 | 2026-10-19 | Entrate dello scoglio **più naturali**: forme irregolari invece di ovali perfetti, niente contorno scuro netto (la roccia si scurisce piano verso l'apertura), sabbia che continua dentro la grotta sfumando nel buio, parete interna del passaggio che sfuma nell'acqua dietro, ciuffi di alghe e muschio che pendono dal bordo della grotta. |
 | 2 | 2026-10-19 | **Profondità e livelli**: ogni roccia, corallo e pianta ha una profondità `z` (sabbia più ampia, oggetti lontani più in alto, piccoli e velati; vicini più in basso, grandi e nitidi), dipinti dal più lontano al più vicino su tre strati (dietro lo scoglio, scoglio, davanti). Sabbia ammucchiata alla base di ogni oggetto e foschia sul bordo lontano della sabbia, così tutto poggia davvero sul fondo. Il passaggio dello scoglio ora è un tunnel buio con un filo di luce in fondo, invece di mostrare l'acqua azzurra. |
+| 2b | 2026-10-19 | Nuovo `js/disegno/caustiche.js`: **rete di luce ondulata** sulla sabbia, due strati che scorrono in direzioni diverse (tessere preparate una volta sola, già schiacciate in prospettiva). **Relitto** di nave sullo sfondo tra le colline: sagoma scura velata dalla foschia, con contorni sfumati, alberi spezzati, sartie e oblò. Pochi dettagli: una **stella marina** sul fianco dello scoglio e tre **conchiglie** sulla sabbia. In attesa di prova sull'iPad. |

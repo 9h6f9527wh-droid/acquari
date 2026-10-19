@@ -7,6 +7,11 @@
 //  - "cervello":   cupola rotonda solcata da pieghe sinuose
 //  - "tubi":       spugne a tubo, cilindri con l'apertura in cima
 //
+// Nello stesso file ci sono anche altri piccoli dettagli fermi del fondo:
+//  - "stella":     stella marina (di solito appoggiata su una roccia)
+//  - "ventaglietto": conchiglia a ventaglio (capasanta)
+//  - "chiocciola": conchiglia a spirale
+//
 // Con "velo" attivo il corallo è disegnato come una sagoma sbiadita,
 // per lo strato lontano.
 
@@ -199,17 +204,131 @@ function dipingiTubi(ctx, caso, x, y, misura, c, velo) {
   }
 }
 
+function dipingiStella(ctx, caso, x, y, misura, c) {
+  const R = misura * 0.5;
+  const r = R * 0.42;
+  const rotazione = caso.tra(0, Math.PI * 2);
+  const traccia = (dx = 0, dy = 0) => {
+    ctx.beginPath();
+    for (let i = 0; i < 5; i++) {
+      const a1 = rotazione + (i / 5) * Math.PI * 2;
+      const a2 = a1 + Math.PI / 5;
+      const a3 = a1 + (Math.PI * 2) / 5;
+      const punta = { x: x + dx + Math.cos(a1) * R * caso.tra(0.9, 1.05), y: y + dy + Math.sin(a1) * R };
+      if (i === 0) ctx.moveTo(punta.x, punta.y);
+      // Braccia morbide: curve tra la punta e l'incavo.
+      ctx.quadraticCurveTo(
+        x + dx + Math.cos(a2) * r * 1.25, y + dy + Math.sin(a2) * r * 1.25,
+        x + dx + Math.cos(a3) * R, y + dy + Math.sin(a3) * R,
+      );
+    }
+    ctx.closePath();
+  };
+  // Ombra sotto, poi il corpo con una sfumatura dal centro chiaro.
+  traccia(1.5, 2);
+  ctx.fillStyle = 'rgba(5, 15, 20, 0.35)';
+  ctx.fill();
+  traccia();
+  const corpo = ctx.createRadialGradient(x - R * 0.2, y - R * 0.2, 0, x, y, R);
+  corpo.addColorStop(0, colore(c, 15));
+  corpo.addColorStop(1, colore(c, -15));
+  ctx.fillStyle = corpo;
+  ctx.fill();
+  // Puntini in rilievo lungo le braccia.
+  ctx.fillStyle = colore(c, 30, 0.7);
+  for (let i = 0; i < 5; i++) {
+    const a = rotazione + (i / 5) * Math.PI * 2;
+    for (let k = 1; k <= 3; k++) {
+      ctx.beginPath();
+      ctx.arc(x + Math.cos(a) * R * k * 0.24, y + Math.sin(a) * R * k * 0.24, Math.max(0.7, R * 0.05), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
+
+function dipingiVentaglietto(ctx, caso, x, y, misura, c) {
+  const R = misura * 0.5;
+  const giro = caso.tra(-0.4, 0.4);
+  ctx.save();
+  ctx.translate(x, y - R * 0.25);
+  ctx.rotate(giro);
+  ctx.scale(1, 0.75); // appoggiata sulla sabbia, un po' di sbieco
+  // Ventaglio: mezzo cerchio con il bordo ondulato.
+  ctx.beginPath();
+  ctx.moveTo(-R * 0.2, R * 0.35);
+  for (let i = 0; i <= 24; i++) {
+    const a = Math.PI + (i / 24) * Math.PI;
+    const onda = 1 + 0.06 * Math.sin(i * Math.PI);
+    ctx.lineTo(Math.cos(a) * R * onda, Math.sin(a) * R * onda + R * 0.1);
+  }
+  ctx.lineTo(R * 0.2, R * 0.35);
+  ctx.closePath();
+  const corpo = ctx.createLinearGradient(0, -R, 0, R * 0.35);
+  corpo.addColorStop(0, colore(c, 18));
+  corpo.addColorStop(1, colore(c, -14));
+  ctx.fillStyle = corpo;
+  ctx.fill();
+  // Coste che partono dal cardine.
+  ctx.strokeStyle = colore(c, -22, 0.5);
+  ctx.lineWidth = Math.max(0.6, R * 0.05);
+  for (let i = 1; i < 9; i++) {
+    const a = Math.PI + (i / 9) * Math.PI;
+    ctx.beginPath();
+    ctx.moveTo(0, R * 0.3);
+    ctx.lineTo(Math.cos(a) * R * 0.95, Math.sin(a) * R * 0.95 + R * 0.1);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function dipingiChiocciola(ctx, caso, x, y, misura, c) {
+  const L = misura;
+  ctx.save();
+  ctx.translate(x, y - L * 0.15);
+  ctx.rotate(caso.tra(-0.5, -0.2));
+  // Guscio a cono, largo alla bocca e appuntito in cima.
+  ctx.beginPath();
+  ctx.moveTo(-L * 0.5, 0);
+  ctx.quadraticCurveTo(-L * 0.45, -L * 0.32, 0, -L * 0.28);
+  ctx.lineTo(L * 0.5, -L * 0.06);
+  ctx.quadraticCurveTo(L * 0.1, L * 0.12, -L * 0.5, 0);
+  ctx.closePath();
+  const corpo = ctx.createLinearGradient(0, -L * 0.3, 0, L * 0.1);
+  corpo.addColorStop(0, colore(c, 18));
+  corpo.addColorStop(1, colore(c, -18));
+  ctx.fillStyle = corpo;
+  ctx.fill();
+  // Giri della spirale.
+  ctx.strokeStyle = colore(c, -25, 0.55);
+  ctx.lineWidth = Math.max(0.6, L * 0.035);
+  for (const k of [0.15, 0.32, 0.48]) {
+    ctx.beginPath();
+    ctx.moveTo(L * (k - 0.25), -L * 0.27 + k * L * 0.2);
+    ctx.quadraticCurveTo(L * (k - 0.2), L * 0.02, L * (k - 0.05), L * 0.02 - k * L * 0.08);
+    ctx.stroke();
+  }
+  // Bocca scura.
+  ctx.fillStyle = colore(c, -35, 0.8);
+  ctx.beginPath();
+  ctx.ellipse(-L * 0.4, -L * 0.04, L * 0.1, L * 0.07, 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
 const PITTORI = {
   ramificato: dipingiRamificato,
   ventaglio: dipingiVentaglio,
   cervello: dipingiCervello,
   tubi: dipingiTubi,
+  stella: dipingiStella,
+  ventaglietto: dipingiVentaglietto,
+  chiocciola: dipingiChiocciola,
 };
 
 // Dipinge un corallo con la base nel punto (x, y). "misura" è in punti.
 export function dipingiCorallo(ctx, caso, tipo, x, y, misura, c, velo = false) {
-  // Ombra morbida alla base.
-  if (!velo) {
+  // Ombra morbida alla base (non per la stella, che sta sul fianco di una roccia).
+  if (!velo && tipo !== 'stella') {
     const ombra = ctx.createRadialGradient(x, y + 2, 0, x, y + 2, misura * 0.6);
     ombra.addColorStop(0, 'rgba(10, 20, 25, 0.4)');
     ombra.addColorStop(1, 'rgba(10, 20, 25, 0)');

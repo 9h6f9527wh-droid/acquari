@@ -26,7 +26,8 @@ export class Abitanti {
     const L = p.lunghezza(larghezza, altezza);
     // La conchiglia vuota sulla sabbia, poi il paguro.
     const xVuota = p.vuota.x * larghezza;
-    disegnaConchiglia(ctx, xVuota, p.suolo(xVuota, larghezza, altezza), L, -1, CONCHIGLIE[p.vuota.conchiglia], p.z, true);
+    const yVuota = this.fondale.profondita(p.vuota.x, p.z0Vuota || 0.92) * altezza;
+    disegnaConchiglia(ctx, xVuota, yVuota, L, -1, CONCHIGLIE[p.vuota.conchiglia], p.z0Vuota || 0.92, true);
     if (p.x !== null) disegnaPaguro(ctx, p, L, CONCHIGLIE[p.conchiglia]);
     const g = this.gambero;
     if (g.pronto) disegnaGambero(ctx, g, g.lunghezza(larghezza, altezza));

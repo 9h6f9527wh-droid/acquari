@@ -6,6 +6,7 @@
 // le zampe; poi vengono girati se guardano a sinistra.
 
 import { velaColore, hsl } from '../util/colore.js';
+import { inCoordinateCorpo } from '../animali/zampe.js';
 
 function vela(c, z) {
   return velaColore(c, z);
@@ -29,33 +30,54 @@ export function disegnaGambero(ctx, g, L) {
   const rosso = hsl(vela({ h: 6, s: 80, l: 50 }, g.z));
   const rossoScuro = hsl(vela({ h: 2, s: 75, l: 34 }, g.z));
   const bianco = hsl(vela({ h: 40, s: 30, l: 95 }, g.z));
-  const biancoTrasp = hsl(vela({ h: 40, s: 30, l: 92 }, g.z), 0, 0.75);
+  const biancoTrasp = hsl(vela({ h: 15, s: 40, l: 88 }, g.z), 0, 0.9);
 
+  // Ombra di contatto sulla roccia: fa capire che ci sta appoggiato sopra.
   ctx.save();
   ctx.translate(g.x, g.y);
+  ctx.rotate(g.angolo * g.verso);
+  const ombra = ctx.createRadialGradient(0, 0, 0, 0, 0, L * 0.4);
+  ombra.addColorStop(0, 'rgba(5, 15, 20, 0.45)');
+  ombra.addColorStop(1, 'rgba(5, 15, 20, 0)');
+  ctx.fillStyle = ombra;
+  ctx.beginPath();
+  ctx.ellipse(0, L * 0.01, L * 0.4, L * 0.07, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.save();
+  // Poggia sulla roccia e si inclina come lei.
+  ctx.translate(g.x, g.y);
   ctx.scale(g.verso, 1);
+  ctx.rotate(g.angolo);
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
-  // Si dondola avanti e indietro, come fanno i gamberi pulitori per farsi notare.
-  const dondolo = g.stato === 'attesa' ? Math.sin(t * 2.2) * L * 0.04 : 0;
-  ctx.translate(dondolo, 0);
+  // Si dondola avanti e indietro (i piedi restano fermi: si muove solo il corpo),
+  // come fanno i gamberi pulitori per farsi notare.
+  const dondolo = g.stato === 'attesa' ? Math.sin(t * 2.2) * L * 0.035 : 0;
+  const alzata = g.alzata;
 
-  // Spina del corpo: dalla testa (s = 0) alla coda (s = 1), arcuata verso l'alto.
+  // Spina del corpo: dalla testa (s = 0) alla coda (s = 1), arcuata verso
+  // l'alto. Quando pulisce, la parte davanti si solleva verso il pesce.
   const punto = (s) => ({
-    x: L * (0.42 - s * 0.85),
-    y: -L * (0.2 + 0.12 * Math.sin(Math.PI * s * 0.9) - 0.1 * s * s),
+    x: L * (0.42 - s * 0.85) + dondolo * (1 - s * 0.5),
+    y: -L * (0.2 + 0.12 * Math.sin(Math.PI * s * 0.9) - 0.1 * s * s) - alzata * L * 0.3 * (1 - s) ** 1.6,
   });
   // Carapace robusto davanti, addome che si assottiglia verso la coda.
   const spessore = (s) => L * (s < 0.35 ? 0.13 - s * 0.05 : 0.115 - (s - 0.35) * 0.1);
 
-  // Zampe (dietro il corpo): cinque paia sottili e trasparenti, che camminano a turno.
-  for (let i = 0; i < 5; i++) {
+  // Zampe (dietro il corpo): cinque, sottili e trasparenti. I piedi stanno
+  // dove li ha appoggiati la camminata (vedi animali/zampe.js).
+  g.zampe.piedi.forEach((piede, i) => {
+    if (!piede) return;
     const s = 0.12 + i * 0.07;
     const p = punto(s);
-    const alza = Math.max(0, Math.sin(g.passo + i * 1.3)) * L * 0.05;
-    const piede = p.x + L * (0.06 - i * 0.03) + Math.sin(g.passo + i * 1.3) * L * 0.04;
-    zampa(ctx, p.x, p.y + spessore(s) * 0.6, p.x + L * 0.05, p.y + L * 0.05, piede, -alza, Math.max(0.8, L * 0.014), biancoTrasp);
-  }
+    const f = inCoordinateCorpo(piede.x, piede.y, g.x, g.y, g.verso, g.angolo);
+    const attacco = { x: p.x, y: p.y + spessore(s) * 0.6 };
+    // Il "ginocchio" sta un po' più in alto e in avanti, a metà strada.
+    const ginocchio = { x: (attacco.x + f.x) / 2 + L * 0.04, y: Math.min(attacco.y, f.y) - L * 0.03 };
+    zampa(ctx, attacco.x, attacco.y, ginocchio.x, ginocchio.y, f.x, f.y, Math.max(1, L * 0.02), biancoTrasp);
+  });
 
   // Ventaglio della coda.
   const coda = punto(1);
@@ -131,24 +153,26 @@ export function disegnaGambero(ctx, g, L) {
   ctx.arc(testa.x + L * 0.03, testa.y - L * 0.08, L * 0.025, 0, Math.PI * 2);
   ctx.fill();
 
-  // Chele piccole davanti (quelle che puliscono): si muovono svelte quando lavora.
-  const lavoro = g.stato === 'pulisce' ? 1 : 0.3;
+  // Chele piccole davanti (quelle che puliscono): quando lavora si allungano
+  // in su verso il pesce e si muovono svelte.
+  const lavoro = 0.3 + alzata * 0.7;
   for (const k of [0, 1]) {
-    const mossa = Math.sin(t * (lavoro > 0.5 ? 10 : 2) + k * 2) * L * 0.04 * lavoro;
-    zampa(ctx, testa.x, testa.y + L * 0.04, testa.x + L * 0.1, testa.y - L * 0.02 + mossa, testa.x + L * 0.2, testa.y - L * 0.06 + mossa, Math.max(0.8, L * 0.016), biancoTrasp);
+    const mossa = Math.sin(t * (alzata > 0.5 ? 10 : 2) + k * 2) * L * 0.04 * lavoro;
+    const su = alzata * L * 0.14;
+    zampa(ctx, testa.x, testa.y + L * 0.04, testa.x + L * 0.1, testa.y - L * 0.02 - su * 0.5 + mossa, testa.x + L * 0.2, testa.y - L * 0.06 - su + mossa, Math.max(0.8, L * 0.016), biancoTrasp);
   }
 
-  // Antenne bianche lunghissime: salgono e si piegano all'indietro, ondeggiando.
+  // Antenne bianche lunghe: salgono e si piegano all'indietro, ondeggiando.
   ctx.strokeStyle = bianco;
   ctx.lineWidth = Math.max(0.6, L * 0.01);
   for (const k of [0, 1]) {
-    const o = Math.sin(t * 1.3 + k * 1.7) * L * 0.25;
+    const o = Math.sin(t * 1.3 + k * 1.7) * L * 0.15;
     ctx.beginPath();
     ctx.moveTo(testa.x + L * 0.08, testa.y - L * 0.06);
     ctx.bezierCurveTo(
-      testa.x + L * (0.5 + k * 0.1), testa.y - L * (0.9 + k * 0.2) + o * 0.3,
-      testa.x - L * (0.2 - k * 0.1) + o, testa.y - L * (1.5 + k * 0.1),
-      testa.x - L * (0.9 + k * 0.3) + o, testa.y - L * (1.1 + k * 0.25),
+      testa.x + L * (0.32 + k * 0.06), testa.y - L * (0.5 + k * 0.1) + o * 0.3,
+      testa.x - L * (0.1 - k * 0.06) + o, testa.y - L * (0.85 + k * 0.06),
+      testa.x - L * (0.5 + k * 0.15) + o, testa.y - L * (0.62 + k * 0.12),
     );
     ctx.stroke();
   }
@@ -249,16 +273,24 @@ export function disegnaPaguro(ctx, p, L, conchiglia) {
   // Durante il trasloco il corpo esce dalla conchiglia e si sposta verso l'altra.
   const spostamento = p.stato === 'esce' ? p.fuori * L * 0.55 : 0;
   const fuori = p.fuori;
-  const passo = p.passo;
-  // Quando cammina la conchiglia ondeggia un po' (su e giù, avanti e indietro).
-  const dondolo = Math.sin(passo * 2) * L * 0.015;
+  const trasloco = p.stato === 'esce' || p.stato === 'entra';
+  // Quando cammina la conchiglia dondola appena, a ogni passo, e poggia sulla sabbia.
+  const dondolo = Math.sin(t * 9) * L * 0.012 * p.dondolo;
 
-  // La conchiglia resta dov'è (durante il trasloco non si muove).
-  disegnaConchiglia(ctx, p.x, p.y + dondolo * 0.5, L, p.verso, conchiglia, p.z);
+  // Ombra di contatto sotto il corpo e le zampe.
+  const ombra = ctx.createRadialGradient(p.x + p.verso * L * 0.15, p.y, 0, p.x + p.verso * L * 0.15, p.y, L * 0.5);
+  ombra.addColorStop(0, 'rgba(5, 15, 20, 0.35)');
+  ombra.addColorStop(1, 'rgba(5, 15, 20, 0)');
+  ctx.fillStyle = ombra;
+  ctx.beginPath();
+  ctx.ellipse(p.x + p.verso * L * 0.15, p.y, L * 0.5, L * 0.09, 0, 0, Math.PI * 2);
+  ctx.fill();
 
   ctx.save();
   ctx.translate(p.x, p.y);
   ctx.scale(p.verso, 1);
+  ctx.rotate(Math.sin(t * 9 + 1) * 0.03 * p.dondolo);
+  disegnaConchiglia(ctx, 0, L * 0.02 + dondolo, L, 1, conchiglia, p.z);
   ctx.translate(spostamento, dondolo);
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
@@ -280,21 +312,24 @@ export function disegnaPaguro(ctx, p, L, conchiglia) {
     ctx.restore();
   }
 
-  // Zampe: quattro, a tre pezzi, che camminano a passi alternati.
+  // Zampe: quattro, a tre pezzi. I piedi stanno dove li ha appoggiati la
+  // camminata (vedi animali/zampe.js); durante il trasloco restano vicini al corpo.
   const spess = Math.max(1.2, L * 0.05);
-  for (let i = 0; i < 4; i++) {
-    const fase = passo + i * Math.PI * 0.5;
-    const alza = Math.max(0, Math.sin(fase)) * L * 0.06;
-    const avanti = Math.cos(fase) * L * 0.05;
+  p.zampe.piedi.forEach((piede, i) => {
     const attacco = { x: bocca.x - L * (0.02 + i * 0.03), y: bocca.y + L * 0.04 };
-    const piedeX = attacco.x + L * (0.13 - i * 0.06) + avanti;
-    zampa(ctx, attacco.x, attacco.y, attacco.x + L * (0.1 - i * 0.03), attacco.y - L * 0.04 - alza * 0.5, piedeX, -alza, spess, i % 2 ? rosso : rossoChiaro);
+    let f = { x: attacco.x + L * (0.13 - i * 0.06), y: 0 };
+    if (piede && !trasloco) f = inCoordinateCorpo(piede.x, piede.y, p.x, p.y, p.verso, 0);
+    f.x -= spostamento;
+    f.y -= dondolo;
+    // Il "ginocchio" sta in alto, a metà strada: le zampe del paguro sono arcuate.
+    const ginocchio = { x: (attacco.x + f.x) / 2 + L * 0.05, y: Math.min(attacco.y, f.y) - L * 0.07 };
+    zampa(ctx, attacco.x, attacco.y, ginocchio.x, ginocchio.y, f.x, f.y, spess, i % 2 ? rosso : rossoChiaro);
     // Punta chiara della zampa.
     ctx.fillStyle = bianco;
     ctx.beginPath();
-    ctx.arc(piedeX, -alza, spess * 0.45, 0, Math.PI * 2);
+    ctx.arc(f.x, f.y, spess * 0.45, 0, Math.PI * 2);
     ctx.fill();
-  }
+  });
 
   // Testa con gli occhi sui peduncoli e le antenne.
   const testa = { x: bocca.x + L * 0.08, y: bocca.y - L * 0.05 };

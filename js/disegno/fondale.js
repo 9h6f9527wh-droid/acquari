@@ -29,6 +29,25 @@ function creaFoglio() {
   return { foglio, ctx: foglio.getContext('2d') };
 }
 
+// Gli stessi punti che disegna tracciaMorbida, ma calcolati uno per uno:
+// servono per sapere dove sta davvero il bordo di una roccia.
+function contornoMorbido(punti, passi = 8) {
+  const n = punti.length;
+  const meta = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+  const fuori = [];
+  for (let i = 0; i < n; i++) {
+    const a = meta(punti[(i - 1 + n) % n], punti[i]);
+    const c = punti[i];
+    const b = meta(punti[i], punti[(i + 1) % n]);
+    for (let k = 0; k < passi; k++) {
+      const t = k / passi;
+      const u = 1 - t;
+      fuori.push({ x: u * u * a.x + 2 * u * t * c.x + t * t * b.x, y: u * u * a.y + 2 * u * t * c.y + t * t * b.y });
+    }
+  }
+  return fuori;
+}
+
 // Disegna una forma morbida che passa vicino ai punti dati (chiusa).
 function tracciaMorbida(ctx, punti) {
   const n = punti.length;
@@ -67,7 +86,7 @@ export class Fondale {
       { x: 0.73, z: 0.5, misura: 0.115, schiacciata: 0.8 },
       { x: 0.865, z: 0.8, misura: 0.07, schiacciata: 0.75 },
       { x: 0.2, z: 0.55, misura: 0.085, schiacciata: 0.7 },
-      { x: 0.275, z: 0.88, misura: 0.042, schiacciata: 0.8 },
+      { x: 0.275, z: 0.88, misura: 0.058, schiacciata: 0.62 }, // la stazione del gambero: larga e piatta in cima
     ].map((r) => ({
       ...r,
       // Raggi irregolari attorno al centro: ogni roccia ha una forma sua.
@@ -150,6 +169,8 @@ export class Fondale {
     // Stessa risoluzione dello schermo: così incollarli costa pochissimo.
     const densita = Math.min(window.devicePixelRatio || 1, 2);
     this.misure = { l: larghezza, a: altezza, densita };
+    this.ingombri = [];
+    this.contorniRocce = [];
     this.dipingiLontano(larghezza, altezza, densita);
     this.dipingiVicino(larghezza, altezza, densita);
     this.dipingiPrimoPiano(larghezza, altezza, densita);
@@ -406,6 +427,7 @@ export class Fondale {
       .sort((p, q) => p.z - q.z);
 
     const M = this.misuraBase(l, a);
+    if (!this.ingombri) this.ingombri = [];
     for (const o of oggetti) {
       // Il seme dipende dall'oggetto: la sua forma è sempre la stessa.
       const caso = creaCasuale(SEME + 10 + o.indice * 7 + (o.roccia ? 100 : 0));
@@ -416,7 +438,8 @@ export class Fondale {
       this.conVelo(ctx, l, a, densita, o.z, (c) => {
         if (o.roccia) {
           const r = this.dipingiRoccia(c, o, l, a, scala);
-          this.cimeRocce[o.indice] = { x: r.x, y: r.y, z: o.z };
+          this.cimeRocce[o.indice] = { x: r.x, y: r.y, z: o.z, larghezza: r.larghezza };
+          this.contorniRocce[o.indice] = r.contorno;
           larghezzaBase = r.larghezza;
         } else {
           const misura = o.misura * M * scala;
@@ -426,7 +449,26 @@ export class Fondale {
         }
       });
       this.sabbiaAlPiede(ctx, x, y, larghezzaBase, o.z);
+      // Quanto spazio occupa sulla sabbia: serve agli animali che camminano.
+      const mezzo = (larghezzaBase / 2) * 1.2;
+      this.ingombri.push({ x0: x - mezzo, x1: x + mezzo, z: o.z });
     }
+  }
+
+  // Altezza della superficie della roccia numero "i" nel punto x (in punti):
+  // il punto più alto del contorno sopra x. Null se x è fuori dalla roccia.
+  superficieRoccia(i, x) {
+    const contorno = this.contorniRocce && this.contorniRocce[i];
+    if (!contorno) return null;
+    let migliore = null;
+    for (let k = 0; k < contorno.length; k++) {
+      const a = contorno[k];
+      const b = contorno[(k + 1) % contorno.length];
+      if ((a.x - x) * (b.x - x) > 0 || a.x === b.x) continue;
+      const y = a.y + ((b.y - a.y) * (x - a.x)) / (b.x - a.x);
+      if (migliore === null || y < migliore) migliore = y;
+    }
+    return migliore;
   }
 
   // Dipinge un oggetto su un foglio a parte, poi lo vela d'azzurro tanto più
@@ -541,7 +583,8 @@ export class Fondale {
 
     // Restituisce il punto più alto: lì sopra possono stare gli anemoni.
     const cima = Math.min(...punti.map((p) => p.y));
-    return { x: cx, y: cima + raggio * 0.12, larghezza: raggio * 2 };
+    const contorno = contornoMorbido(punti);
+    return { x: cx, y: cima + raggio * 0.12, larghezza: raggio * 2, contorno };
   }
 
   controllaMisure(larghezza, altezza) {

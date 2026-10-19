@@ -34,6 +34,10 @@ const pesci = new Pesci(fondale);
 const lontananza = new Lontananza(fondale);
 const abitanti = new Abitanti(fondale);
 
+// Accesso per le prove: permette di controllare la vasca dall'esterno
+// (non cambia nulla nel gioco).
+window.acquario = { fondale, pesci, abitanti };
+
 function adattaAlloSchermo() {
   const densita = Math.min(window.devicePixelRatio || 1, MAX_DENSITA);
   larghezza = window.innerWidth;

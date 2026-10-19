@@ -9,7 +9,7 @@ import { Fondale } from './disegno/fondale.js';
 import { Piante } from './disegno/piante.js';
 import { Caustiche } from './disegno/caustiche.js';
 import { Pesci } from './pesci/pesci.js';
-import { BancoLontano } from './disegno/bancoLontano.js';
+import { Lontananza } from './disegno/lontananza.js';
 
 const canvas = document.getElementById('vasca');
 const ctx = canvas.getContext('2d');
@@ -30,7 +30,7 @@ const fondale = new Fondale();
 const piante = new Piante(fondale);
 const caustiche = new Caustiche(fondale);
 const pesci = new Pesci(fondale);
-const bancoLontano = new BancoLontano(fondale);
+const lontananza = new Lontananza(fondale);
 
 function adattaAlloSchermo() {
   const densita = Math.min(window.devicePixelRatio || 1, MAX_DENSITA);
@@ -52,7 +52,7 @@ function aggiorna(dt) {
   caustiche.aggiorna(dt);
   bolle.aggiorna(dt, larghezza, altezza, fondale);
   pesci.aggiorna(dt, larghezza, altezza);
-  bancoLontano.aggiorna(dt, larghezza, altezza);
+  lontananza.aggiorna(dt, larghezza, altezza);
 }
 
 // L'ordine conta: ciò che è disegnato dopo appare davanti.
@@ -60,8 +60,8 @@ function aggiorna(dt) {
 function disegna() {
   acqua.disegna(ctx, larghezza, altezza);
   fondale.disegnaLontano(ctx, larghezza, altezza);
-  // Il banco lontano passa nella foschia, dietro le alghe lontane.
-  bancoLontano.disegna(ctx);
+  // Chi passa in lontananza (banco, squalo, balena...), dietro le alghe lontane.
+  lontananza.disegna(ctx);
   piante.disegnaLontane(ctx, larghezza, altezza);
   // Sabbia e oggetti dietro lo scoglio, poi le piante che stanno lì.
   fondale.disegnaVicino(ctx, larghezza, altezza);

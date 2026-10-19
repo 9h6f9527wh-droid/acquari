@@ -19,6 +19,25 @@ import { dipingiCorallo } from './coralli.js';
 
 const PUNTI_PROFILO = 48;
 
+// Disegna una forma morbida che passa vicino ai punti dati (chiusa).
+function tracciaMorbida(ctx, punti) {
+  const n = punti.length;
+  const meta = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+  const inizio = meta(punti[n - 1], punti[0]);
+  ctx.beginPath();
+  ctx.moveTo(inizio.x, inizio.y);
+  for (let i = 0; i < n; i++) {
+    const m = meta(punti[i], punti[(i + 1) % n]);
+    ctx.quadraticCurveTo(punti[i].x, punti[i].y, m.x, m.y);
+  }
+  ctx.closePath();
+}
+
+// Ingrandisce o rimpicciolisce una forma attorno a un centro.
+function scalaForma(punti, centro, scala) {
+  return punti.map((p) => ({ x: centro.x + (p.x - centro.x) * scala, y: centro.y + (p.y - centro.y) * scala }));
+}
+
 export class Scoglio {
   constructor(fondale) {
     this.fondale = fondale;
@@ -46,6 +65,22 @@ export class Scoglio {
         return p;
       });
     });
+    // Irregolarità dei bordi delle aperture: onde sovrapposte, come roccia
+    // scavata dall'acqua (niente ovali perfetti).
+    const rumore = () => [
+      { frequenza: 3, ampiezza: caso.tra(0.05, 0.09), fase: caso.tra(0, 6.3) },
+      { frequenza: 5, ampiezza: caso.tra(0.03, 0.06), fase: caso.tra(0, 6.3) },
+      { frequenza: 11, ampiezza: caso.tra(0.015, 0.03), fase: caso.tra(0, 6.3) },
+    ];
+    this.rumoreGrotta = rumore();
+    this.rumorePassaggio = rumore();
+    // Alghe che pendono dal bordo della grotta.
+    this.alghe = Array.from({ length: 9 }, () => ({
+      dove: caso.tra(0.12, 0.88), // posizione lungo l'arco
+      lunghezza: caso.tra(0.18, 0.45),
+      curva: caso.tra(-0.5, 0.5),
+      tinta: caso.tra(85, 135),
+    }));
     this.lucine = Array.from({ length: 7 }, () => ({ u: caso.tra(-0.7, 0.7), v: caso.tra(0.2, 0.8), r: caso.tra(0.8, 1.8) }));
     this.retro = document.createElement('canvas');
     this.fronte = document.createElement('canvas');
@@ -74,6 +109,8 @@ export class Scoglio {
     // Aperture (in punti). Le teniamo da parte: serviranno ai pesci.
     this.grotta = { x: cx - rx * 0.22, y: base - 6, rx: rx * 0.32, ry: H * 0.38 };
     this.passaggio = { x: cx + rx * 0.4, y: base - H * 0.58, rx: rx * 0.16, ry: H * 0.13 };
+    this.formaGrotta = this.creaFormaGrotta(this.grotta);
+    this.formaPassaggio = this.creaFormaPassaggio(this.passaggio);
     this.tana = {
       // Punto in fondo alla grotta dove un pesce può riposare.
       interno: { x: this.grotta.x, y: this.grotta.y - this.grotta.ry * 0.45 },
@@ -119,54 +156,121 @@ export class Scoglio {
     ctx.closePath();
   }
 
-  // La grotta è un arco: tondo in alto e piatto sulla sabbia.
-  tracciaGrotta(ctx, g, scala = 1) {
-    ctx.beginPath();
-    ctx.ellipse(g.x, g.y, g.rx * scala, g.ry * scala, 0, Math.PI, Math.PI * 2);
-    ctx.quadraticCurveTo(g.x, g.y + g.ry * 0.12, g.x - g.rx * scala, g.y);
-    ctx.closePath();
+  static ondula(rumore, angolo) {
+    let r = 1;
+    for (const o of rumore) r += o.ampiezza * Math.sin(angolo * o.frequenza + o.fase);
+    return r;
   }
 
-  tracciaPassaggio(ctx, p, dx = 0, dy = 0, scala = 1) {
-    ctx.beginPath();
-    ctx.ellipse(p.x + dx, p.y + dy, p.rx * scala, p.ry * scala, -0.25, 0, Math.PI * 2);
+  // Grotta: un arco irregolare e un po' inclinato, con la base nella sabbia.
+  creaFormaGrotta(g) {
+    const punti = [];
+    const N = 18;
+    for (let i = 0; i <= N; i++) {
+      const angolo = Math.PI + (i / N) * Math.PI; // da sinistra, sopra, a destra
+      const r = Scoglio.ondula(this.rumoreGrotta, angolo);
+      const y = g.y + Math.sin(angolo) * g.ry * r;
+      // L'arco "pende" un po' a destra man mano che sale.
+      const x = g.x + Math.cos(angolo) * g.rx * r + (g.y - y) * 0.18;
+      punti.push({ x, y });
+    }
+    // Base sotto la sabbia.
+    punti.push({ x: g.x + g.rx * 0.8, y: g.y + 10 }, { x: g.x - g.rx * 0.85, y: g.y + 10 });
+    return punti;
+  }
+
+  // Passaggio: una forma tondeggiante irregolare, allungata in diagonale.
+  creaFormaPassaggio(p) {
+    const N = 16;
+    return Array.from({ length: N }, (_, i) => {
+      const angolo = (i / N) * Math.PI * 2;
+      const r = Scoglio.ondula(this.rumorePassaggio, angolo);
+      const x = Math.cos(angolo) * p.rx * r;
+      const y = Math.sin(angolo) * p.ry * r;
+      const inclinazione = -0.3;
+      return {
+        x: p.x + x * Math.cos(inclinazione) - y * Math.sin(inclinazione),
+        y: p.y + x * Math.sin(inclinazione) + y * Math.cos(inclinazione),
+      };
+    });
+  }
+
+  tracciaGrotta(ctx, scala = 1) {
+    const centro = { x: this.grotta.x, y: this.grotta.y - this.grotta.ry * 0.4 };
+    tracciaMorbida(ctx, scala === 1 ? this.formaGrotta : scalaForma(this.formaGrotta, centro, scala));
+  }
+
+  tracciaPassaggio(ctx, scala = 1) {
+    tracciaMorbida(ctx, scala === 1 ? this.formaPassaggio : scalaForma(this.formaPassaggio, this.passaggio, scala));
   }
 
   dipingiRetro(ctx) {
-    // Interno della grotta: roccia scura ai bordi, quasi nero in fondo.
     const g = this.grotta;
-    const buio = ctx.createRadialGradient(g.x, g.y - g.ry * 0.4, 0, g.x, g.y - g.ry * 0.4, g.rx * 1.2);
-    buio.addColorStop(0, 'rgb(3, 10, 18)');
-    buio.addColorStop(0.55, 'rgb(10, 24, 34)');
-    buio.addColorStop(1, 'hsl(200, 20%, 24%)');
+    // Interno della grotta: vicino al bordo ha il colore della roccia in ombra
+    // (così non si vede lo "stacco"), poi sfuma nel buio più profondo.
+    const fondoX = g.x + g.rx * 0.15;
+    const fondoY = g.y - g.ry * 0.35;
+    const buio = ctx.createRadialGradient(fondoX, fondoY, 0, fondoX, fondoY, g.rx * 1.25);
+    buio.addColorStop(0, 'rgb(2, 8, 14)');
+    buio.addColorStop(0.45, 'rgb(7, 19, 28)');
+    buio.addColorStop(0.8, 'hsl(202, 18%, 17%)');
+    buio.addColorStop(1, 'hsl(200, 17%, 24%)');
     ctx.fillStyle = buio;
-    this.tracciaGrotta(ctx, g, 1.12);
+    this.tracciaGrotta(ctx, 1.15);
     ctx.fill();
+
+    // La sabbia continua dentro la grotta e si perde nel buio.
+    ctx.save();
+    this.tracciaGrotta(ctx, 1.15);
+    ctx.clip();
+    const pavimento = ctx.createLinearGradient(0, g.y + 8, 0, g.y - g.ry * 0.3);
+    pavimento.addColorStop(0, 'rgba(120, 118, 95, 0.95)');
+    pavimento.addColorStop(0.45, 'rgba(60, 64, 58, 0.6)');
+    pavimento.addColorStop(1, 'rgba(10, 20, 25, 0)');
+    ctx.fillStyle = pavimento;
+    ctx.beginPath();
+    ctx.ellipse(g.x, g.y + 8, g.rx * 1.3, g.ry * 0.5, 0, Math.PI, Math.PI * 2);
+    ctx.lineTo(g.x + g.rx * 1.3, g.y + 20);
+    ctx.lineTo(g.x - g.rx * 1.3, g.y + 20);
+    ctx.fill();
+    ctx.restore();
 
     // Qualche lucina nel buio, come piccole creature luminose.
     ctx.globalCompositeOperation = 'lighter';
     for (const p of this.lucine) {
-      const x = g.x + p.u * g.rx * 0.8;
-      const y = g.y - p.v * g.ry * 0.8;
-      ctx.fillStyle = 'rgba(120, 255, 230, 0.15)';
+      const x = fondoX + p.u * g.rx * 0.6;
+      const y = fondoY - p.v * g.ry * 0.35 + g.ry * 0.15;
+      ctx.fillStyle = 'rgba(120, 255, 230, 0.12)';
       ctx.beginPath();
       ctx.arc(x, y, p.r * 3, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = 'rgba(190, 255, 240, 0.8)';
+      ctx.fillStyle = 'rgba(190, 255, 240, 0.7)';
       ctx.beginPath();
-      ctx.arc(x, y, p.r * 0.7, 0, Math.PI * 2);
+      ctx.arc(x, y, p.r * 0.6, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.globalCompositeOperation = 'source-over';
 
-    // Passaggio: si vede la parete interna del tunnel solo da un lato,
-    // e dall'altro si vede l'acqua dietro lo scoglio.
+    // Passaggio: la parete interna del tunnel, scura in alto e più chiara
+    // in basso (dove arriva la luce da sopra)...
     const p = this.passaggio;
-    ctx.fillStyle = 'hsl(200, 18%, 26%)';
-    this.tracciaPassaggio(ctx, p, 0, 0, 1.1);
+    const parete = ctx.createLinearGradient(0, p.y - p.ry * 1.2, 0, p.y + p.ry * 1.2);
+    parete.addColorStop(0, 'hsl(203, 20%, 14%)');
+    parete.addColorStop(0.6, 'hsl(200, 17%, 24%)');
+    parete.addColorStop(1, 'hsl(195, 15%, 38%)');
+    ctx.fillStyle = parete;
+    this.tracciaPassaggio(ctx, 1.15);
     ctx.fill();
+    // ...e al centro, sfumando, si apre sull'acqua dietro lo scoglio.
     ctx.globalCompositeOperation = 'destination-out';
-    this.tracciaPassaggio(ctx, p, p.rx * 0.22, -p.ry * 0.12, 0.86);
+    const ox = p.x + p.rx * 0.25;
+    const oy = p.y - p.ry * 0.1;
+    const apertura = ctx.createRadialGradient(ox, oy, 0, ox, oy, p.rx * 0.95);
+    apertura.addColorStop(0, 'rgba(0, 0, 0, 1)');
+    apertura.addColorStop(0.6, 'rgba(0, 0, 0, 1)');
+    apertura.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = apertura;
+    this.tracciaPassaggio(ctx, 1.15);
     ctx.fill();
     ctx.globalCompositeOperation = 'source-over';
   }
@@ -257,33 +361,86 @@ export class Scoglio {
     ctx.stroke();
     ctx.restore();
 
-    // --- Le aperture: "bucano" la roccia e lasciano vedere il retro ---
+    // --- Le aperture ---
+    const g = this.grotta;
+    const p = this.passaggio;
+
+    // 1. Rientranza: la roccia si scurisce piano piano avvicinandosi
+    //    all'apertura, come quando una superficie piega verso l'interno.
+    ctx.save();
+    this.tracciaSagoma(ctx);
+    ctx.clip();
+    const rientranza = (x, y, rx2, ry2, forza) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(1, ry2 / rx2);
+      const ombra2 = ctx.createRadialGradient(0, 0, rx2 * 0.7, 0, 0, rx2 * 1.75);
+      ombra2.addColorStop(0, `rgba(5, 14, 22, ${forza})`);
+      ombra2.addColorStop(1, 'rgba(5, 14, 22, 0)');
+      ctx.fillStyle = ombra2;
+      ctx.fillRect(-rx2 * 2, -rx2 * 2, rx2 * 4, rx2 * 4);
+      ctx.restore();
+    };
+    rientranza(g.x + g.rx * 0.08, g.y - g.ry * 0.45, g.rx, g.ry * 0.8, 0.6);
+    rientranza(p.x, p.y, p.rx, p.ry, 0.55);
+    ctx.restore();
+
+    // 2. I buchi veri e propri, dalla forma irregolare.
     ctx.globalCompositeOperation = 'destination-out';
     ctx.fillStyle = '#000'; // colore pieno: il buco deve essere completo
-    this.tracciaGrotta(ctx, this.grotta);
+    this.tracciaGrotta(ctx);
     ctx.fill();
-    this.tracciaPassaggio(ctx, this.passaggio);
+    this.tracciaPassaggio(ctx);
     ctx.fill();
     ctx.globalCompositeOperation = 'source-over';
 
-    // Bordi delle aperture: un anello scuro dà spessore alla roccia,
-    // e il labbro inferiore preso dalla luce la fa sembrare scavata.
-    for (const traccia of [() => this.tracciaGrotta(ctx, this.grotta), () => this.tracciaPassaggio(ctx, this.passaggio)]) {
-      traccia();
-      ctx.lineWidth = Math.max(3, rx * 0.04);
-      ctx.strokeStyle = 'rgba(5, 15, 25, 0.55)';
-      ctx.stroke();
-      ctx.save();
-      ctx.translate(0, -2);
-      traccia();
-      ctx.lineWidth = 1.2;
-      ctx.strokeStyle = 'rgba(200, 235, 230, 0.25)';
-      ctx.stroke();
-      ctx.restore();
+    // 3. Ciuffi di alghe che pendono dal bordo superiore della grotta:
+    //    nascondono in parte il contorno e lo rendono più naturale.
+    const caso = creaCasuale(99);
+    const arco = this.formaGrotta.slice(0, 19);
+    ctx.lineCap = 'round';
+    for (const a of this.alghe) {
+      const k = a.dove * (arco.length - 1);
+      const p0 = arco[Math.floor(k)];
+      const p1 = arco[Math.min(arco.length - 1, Math.floor(k) + 1)];
+      const f = k - Math.floor(k);
+      const x0 = p0.x + (p1.x - p0.x) * f;
+      const y0 = p0.y + (p1.y - p0.y) * f - 3;
+      // Ogni ciuffo ha 2-3 fili ondulati, più spessi in alto e sottili in punta.
+      const fili = caso.intero(2, 3);
+      for (let n = 0; n < fili; n++) {
+        const l = g.ry * a.lunghezza * caso.tra(0.6, 1);
+        const sx = x0 + caso.tra(-3, 3);
+        const ondaFase = caso.tra(0, 6.3);
+        const pezzi = 6;
+        let px = sx;
+        let py = y0;
+        for (let s = 1; s <= pezzi; s++) {
+          const q = s / pezzi;
+          const nx = sx + Math.sin(q * 5 + ondaFase) * 2.2 + a.curva * l * q * 0.4;
+          const ny = y0 + l * q;
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+          ctx.lineTo(nx, ny);
+          ctx.lineWidth = 2.6 * (1 - q * 0.7);
+          ctx.strokeStyle = `hsla(${a.tinta + n * 8}, 45%, ${30 + q * 14}%, ${0.9 - q * 0.35})`;
+          ctx.stroke();
+          px = nx;
+          py = ny;
+        }
+      }
+    }
+
+    // 4. Un po' di muschio morbido lungo il bordo superiore dell'arco.
+    for (let i = 2; i < arco.length - 2; i += 2) {
+      const r = g.rx * caso.tra(0.06, 0.1);
+      ctx.fillStyle = `hsla(${caso.tra(90, 130)}, 35%, ${caso.tra(28, 38)}%, 0.55)`;
+      ctx.beginPath();
+      ctx.ellipse(arco[i].x, arco[i].y - r * 0.4, r * 1.6, r * 0.6, caso.tra(-0.3, 0.3), 0, Math.PI * 2);
+      ctx.fill();
     }
 
     // Decorazioni sullo scoglio: piccoli coralli appoggiati sulla roccia.
-    const caso = creaCasuale(99);
     const decora = (tipo, u, misura, colore, affonda = 4) => {
       const x = cx + u * rx;
       dipingiCorallo(ctx, caso, tipo, x, this.cima(u) + affonda, misura * M, colore);

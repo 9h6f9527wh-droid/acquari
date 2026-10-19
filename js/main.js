@@ -53,6 +53,10 @@ function disegna() {
   fondale.disegnaLontano(ctx, larghezza, altezza);
   piante.disegnaLontane(ctx, larghezza, altezza);
   fondale.disegnaVicino(ctx, larghezza, altezza);
+  // Scoglio centrale in due fogli: i pesci dentro la tana (dalla Fase 3)
+  // verranno disegnati in mezzo, così la roccia davanti li copre.
+  fondale.scoglio.disegnaRetro(ctx);
+  fondale.scoglio.disegnaFronte(ctx);
   luce.disegna(ctx, larghezza, altezza);
   piante.disegnaVicine(ctx, larghezza, altezza);
   particelle.disegna(ctx, larghezza, altezza);

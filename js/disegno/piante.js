@@ -146,15 +146,16 @@ export class Piante {
     const caso = creaCasuale(77);
 
     // Disposizione delle piante vicine. "roccia" = sta sopra quella roccia
-    // (indice nella lista delle rocce del fondale) invece che sulla sabbia.
+    // (indice nella lista delle rocce del fondale) invece che sulla sabbia;
+    // "scoglio" = sta in cima al grande scoglio centrale.
     const vicine = [
       { tipo: 'kelp', x: 0.035, altezza: 0.62, colore: { h: 42, s: 50, l: 36 } },
       { tipo: 'nastro', x: 0.075, altezza: 0.3, colore: { h: 105, s: 45, l: 38 } },
       { tipo: 'anemone', roccia: 2, misura: 0.085, colore: { h: 318, s: 55, l: 62 }, punte: { h: 300, s: 90, l: 80 } },
       { tipo: 'piuma', x: 0.35, altezza: 0.25, colore: { h: 110, s: 60, l: 42 } },
-      { tipo: 'spada', x: 0.44, altezza: 0.15, colore: { h: 120, s: 40, l: 32 } },
-      { tipo: 'anemone', x: 0.48, misura: 0.06, colore: { h: 150, s: 45, l: 50 }, punte: { h: 290, s: 80, l: 72 } },
-      { tipo: 'nastro', x: 0.6, altezza: 0.28, colore: { h: 95, s: 45, l: 40 } },
+      { tipo: 'spada', x: 0.585, altezza: 0.13, colore: { h: 120, s: 40, l: 32 } },
+      { tipo: 'anemone', scoglio: true, misura: 0.07, colore: { h: 150, s: 45, l: 50 }, punte: { h: 290, s: 80, l: 72 } },
+      { tipo: 'nastro', x: 0.62, altezza: 0.28, colore: { h: 95, s: 45, l: 40 } },
       { tipo: 'anemone', roccia: 0, misura: 0.1, colore: { h: 28, s: 70, l: 58 }, punte: { h: 45, s: 95, l: 75 } },
       { tipo: 'piuma', x: 0.91, altezza: 0.21, colore: { h: 135, s: 55, l: 40 } },
       { tipo: 'kelp', x: 0.965, altezza: 0.7, colore: { h: 48, s: 48, l: 38 } },
@@ -354,7 +355,10 @@ export class Piante {
     for (const p of piante) {
       let x;
       let y;
-      if (p.roccia !== undefined) {
+      if (p.scoglio) {
+        x = this.fondale.scoglio.appoggio.x;
+        y = this.fondale.scoglio.appoggio.y;
+      } else if (p.roccia !== undefined) {
         const cima = this.fondale.cimeRocce[p.roccia];
         x = cima.x;
         y = cima.y;

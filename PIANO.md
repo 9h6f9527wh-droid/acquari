@@ -60,13 +60,13 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 - Movimento naturale: sceglie dove andare, accelera, rallenta, gira con una curva morbida, evita i bordi.
 - *Scelto:* una **coppia di pesci pagliaccio** (vivono in coppia e abitano gli anemoni: la loro casa è l'anemone arancione).
 
-### 🟡 Fase 4 — Più specie e i banchi
+### ✅ Fase 4 — Più specie e i banchi
 - **Pesce chirurgo blu**: insieme alla coppia di pagliacci (più avanti mangerà le alghe).
 - Un piccolo gruppo di **pesci cardinale di Banggai**: argentati, con strisce nere e puntini bianchi; stanno quasi fermi vicino a un corallo e si muovono **in banco**, insieme e piano piano.
 - *Scartate:* le castagnole (troppo banali, occuperebbero solo spazio).
 - 🎯 *Cosa provi:* controlliamo che resti fluido con 30-40 pesci.
 
-### ⬜ Fase 4b — Il banco lontano *(aggiunta su richiesta)*
+### 🟡 Fase 4b — Il banco lontano *(aggiunta su richiesta)*
 - Ogni tanto un banco di pesci passa in lontananza, come sagome velate nella foschia.
 
 > **Il cast della vasca** *(scelto insieme il 2026-10-19)*: non solo pesci, ma animali diversi, ognuno con un suo modo di muoversi e un suo ruolo.
@@ -207,3 +207,4 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 | — | 2026-10-19 | Scelto insieme il **cast della vasca**: nuove fasi 4c (gambero pulitore, paguro), 4d (polpo), 4e (seppia fiammeggiante, cavalluccio), 4f (anguille giardino, nudibranco), 4g (pesce palla), 5c (medusa che di notte diventa blu fluo); pesce scorpione con i predatori (Fase 12); tartaruga e razza come premi (Fase 20). |
 | 4 | 2026-10-19 | Le schede in `pesci/specie.js` ora descrivono tutto (forma, pinne dorsali/anali, tipo di coda, disegni sulla pelle, abitudini) e `disegno/pesce.js` disegna qualsiasi specie leggendole. Nuove specie: **chirurgo blu** (tavolozza nera, coda gialla, "bisturi"; gira per la vasca e perlustra il fondo) e **5 cardinali di Banggai** (barre nere, puntini bianchi, pinne a vela, coda forcuta). Nuovo `pesci/banco.js`: punto di ritrovo vicino a un corallo, ognuno al suo posto, il gruppo si sposta insieme ogni tanto e si gira "a onda". Simulazione di 90 secondi: nessun errore, nessun pesce fuori vasca, banco unito. In attesa di prova sull'iPad. |
 | 4 | 2026-10-19 | Banco **più vivace**: il gruppo alterna *giri* della vasca (2-4 tappe a caso in acqua aperta, sopra lo scoglio, con curve morbide) e *soste* vicino a coralli e rocce; si allunga mentre nuota e si ricompatta in sosta; ognuno ondeggia di più attorno al suo posto. Simulazione di 2 minuti: il gruppo attraversa quasi tutta la vasca restando unito. |
+| 4b | 2026-10-19 | Nuovo `js/disegno/bancoLontano.js`: ogni 25-60 secondi (la prima volta dopo pochi secondi) una nuvola fitta di 60 sagome di pesciolini attraversa la vasca in lontananza, nella foschia, dietro le alghe lontane; la nuvola si stira, si schiaccia e ondeggia mentre avanza, e ogni pesciolino batte la coda. In attesa di prova sull'iPad. |

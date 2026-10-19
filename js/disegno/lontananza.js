@@ -16,12 +16,12 @@ function casuale(min, max) {
 // Chi può passare: quanto spesso, quanto è grande (in frazioni della vasca),
 // quanto è veloce, a che altezza nuota e quanto è velato.
 const PASSANTI = {
-  banco: { peso: 0.5, lunghezza: 0.11, velocita: 0.075, alto: [0.25, 0.5], velo: 0.5 },
-  squalo: { peso: 0.16, lunghezza: 0.34, velocita: 0.06, alto: [0.22, 0.48], velo: 0.42 },
-  orche: { peso: 0.1, lunghezza: 0.4, velocita: 0.065, alto: [0.2, 0.42], velo: 0.4 },
-  manta: { peso: 0.1, lunghezza: 0.3, velocita: 0.045, alto: [0.2, 0.45], velo: 0.42 },
-  balena: { peso: 0.08, lunghezza: 0.95, velocita: 0.028, alto: [0.14, 0.26], velo: 0.28 },
-  piovra: { peso: 0.06, lunghezza: 0.3, velocita: 0.05, alto: [0.25, 0.5], velo: 0.42 },
+  banco: { peso: 0.3, lunghezza: 0.11, velocita: 0.075, alto: [0.25, 0.5], velo: 0.5 },
+  squalo: { peso: 0.2, lunghezza: 0.34, velocita: 0.06, alto: [0.22, 0.48], velo: 0.42 },
+  orche: { peso: 0.14, lunghezza: 0.4, velocita: 0.065, alto: [0.2, 0.42], velo: 0.4 },
+  manta: { peso: 0.14, lunghezza: 0.3, velocita: 0.045, alto: [0.2, 0.45], velo: 0.42 },
+  balena: { peso: 0.11, lunghezza: 0.95, velocita: 0.028, alto: [0.14, 0.26], velo: 0.28 },
+  piovra: { peso: 0.11, lunghezza: 0.3, velocita: 0.05, alto: [0.25, 0.5], velo: 0.42 },
 };
 
 function scegliPassante() {
@@ -81,7 +81,7 @@ export class Lontananza {
     const fuori = a.verso > 0 ? a.x > larghezza + a.margine : a.x < -a.margine;
     if (fuori) {
       this.attivo = null;
-      this.attesa = casuale(25, 55);
+      this.attesa = casuale(10, 26);
     }
   }
 

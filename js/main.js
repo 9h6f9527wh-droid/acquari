@@ -10,6 +10,7 @@ import { Piante } from './disegno/piante.js';
 import { Caustiche } from './disegno/caustiche.js';
 import { Pesci } from './pesci/pesci.js';
 import { Lontananza } from './disegno/lontananza.js';
+import { Abitanti } from './animali/abitanti.js';
 
 const canvas = document.getElementById('vasca');
 const ctx = canvas.getContext('2d');
@@ -31,6 +32,7 @@ const piante = new Piante(fondale);
 const caustiche = new Caustiche(fondale);
 const pesci = new Pesci(fondale);
 const lontananza = new Lontananza(fondale);
+const abitanti = new Abitanti(fondale);
 
 function adattaAlloSchermo() {
   const densita = Math.min(window.devicePixelRatio || 1, MAX_DENSITA);
@@ -53,6 +55,7 @@ function aggiorna(dt) {
   bolle.aggiorna(dt, larghezza, altezza, fondale);
   pesci.aggiorna(dt, larghezza, altezza);
   lontananza.aggiorna(dt, larghezza, altezza);
+  abitanti.aggiorna(dt, larghezza, altezza);
 }
 
 // L'ordine conta: ciò che è disegnato dopo appare davanti.
@@ -79,6 +82,8 @@ function disegna() {
   fondale.disegnaPrimoPiano(ctx, larghezza, altezza);
   piante.disegnaDavanti(ctx, larghezza, altezza);
   pesci.disegna(ctx, 'davanti', larghezza, altezza);
+  // Gambero e paguro, vicino al vetro.
+  abitanti.disegna(ctx, larghezza, altezza);
   luce.disegna(ctx, larghezza, altezza);
   particelle.disegna(ctx, larghezza, altezza);
   bolle.disegna(ctx);

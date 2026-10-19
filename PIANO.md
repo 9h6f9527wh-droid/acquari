@@ -66,7 +66,7 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 - *Scartate:* le castagnole (troppo banali, occuperebbero solo spazio).
 - 🎯 *Cosa provi:* controlliamo che resti fluido con 30-40 pesci.
 
-### 🟡 Fase 4b — Il banco lontano *(aggiunta su richiesta)*
+### ✅ Fase 4b — Il banco lontano *(aggiunta su richiesta)*
 - Ogni tanto un banco di pesci passa in lontananza, come sagome velate nella foschia.
 - *Aggiunto su richiesta:* a volte, al posto del banco, passa un grande animale: squalo, coppia di orche (mamma e piccolo), manta, balena o piovra gigante (più rare la balena e la piovra).
 
@@ -74,7 +74,7 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 > Scartati per non affollare: granchio (lo sostituisce il paguro), aragosta, pesce mandarino, murena.
 > Idea per più avanti: gambero pistolero e ghiozzo, che vivono in coppia in una tana nella sabbia.
 
-### ⬜ Fase 4c — Gli abitanti del fondo *(aggiunta su richiesta)*
+### 🟡 Fase 4c — Gli abitanti del fondo *(aggiunta su richiesta)*
 - 🦐 **Gambero pulitore**: rosso e bianco, antenne lunghe; i pesci si fermano da lui per farsi "pulire".
 - 🐚 **Paguro**: cammina sulla sabbia con la sua conchiglia e ogni tanto la cambia con una più grande.
 
@@ -210,3 +210,4 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 | 4 | 2026-10-19 | Banco **più vivace**: il gruppo alterna *giri* della vasca (2-4 tappe a caso in acqua aperta, sopra lo scoglio, con curve morbide) e *soste* vicino a coralli e rocce; si allunga mentre nuota e si ricompatta in sosta; ognuno ondeggia di più attorno al suo posto. Simulazione di 2 minuti: il gruppo attraversa quasi tutta la vasca restando unito. |
 | 4b | 2026-10-19 | Nuovo `js/disegno/bancoLontano.js`: ogni 25-60 secondi (la prima volta dopo pochi secondi) una nuvola fitta di 60 sagome di pesciolini attraversa la vasca in lontananza, nella foschia, dietro le alghe lontane; la nuvola si stira, si schiaccia e ondeggia mentre avanza, e ogni pesciolino batte la coda. In attesa di prova sull'iPad. |
 | 4b | 2026-10-19 | `bancoLontano.js` diventa `lontananza.js`: ogni volta si sceglie a caso chi passa (banco 50%, squalo, orche, manta, balena, piovra gigante), ognuno con la sua sagoma, misura, velocità e modo di nuotare (coda che batte, orche che ondeggiano, manta che batte le ali, piovra a getto). Sagome dipinte piene su un foglio e appoggiate velate, così le parti sovrapposte non si scuriscono. Pause di 35-80 secondi: la lontananza resta spesso vuota. Poi, su richiesta, pause ridotte a 25-55 secondi. |
+| 4c | 2026-10-19 | Nuova cartella `js/animali/`: `gambero.js` (sta sulla piccola roccia davanti, la sua *stazione di pulizia*: si dondola, passeggia, e quando un pesce si ferma sopra di lui si alza e lo pulisce lungo il fianco), `paguro.js` (cammina sulla sabbia vicino al vetro, si ferma a frugare con le chele, ogni tanto esce dalla sua conchiglia e si infila in quella vuota), `abitanti.js` (li gestisce e li disegna davanti). I pesci hanno il nuovo comportamento *pulizia* (il chirurgo ci va spesso, i pagliacci ogni tanto): si fermano inclinati con la testa in giù. Disegni in `js/disegno/invertebrati.js`. Simulazione di 5 minuti: 6 pulizie, 1 cambio di conchiglia, nessun errore. In attesa di prova sull'iPad. |

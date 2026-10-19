@@ -17,7 +17,8 @@
 //  - banco:     resta con il suo gruppo (vedi banco.js);
 //  - anemone:   va a giocare tra i tentacoli dell'anemone, la sua casa;
 //  - grotta:    entra nella grotta dello scoglio, riposa un po' al buio ed esce;
-//  - passaggio: attraversa il tunnel dello scoglio e sbuca dall'altra parte.
+//  - passaggio: attraversa il tunnel dello scoglio e sbuca dall'altra parte;
+//  - pulizia:   va dal gambero pulitore, si ferma e si fa pulire.
 
 import { Z_SCOGLIO } from '../disegno/fondale.js';
 
@@ -113,6 +114,34 @@ export class Pesce {
 
     if (c.tipo === 'vaga') {
       if (arrivato) this.scegli(larghezza, altezza);
+      return;
+    }
+
+    if (c.tipo === 'pulizia') {
+      const st = this.fondale.stazionePulizia;
+      if (!st) return this.vaga(larghezza, altezza);
+      if (c.passo === 0) {
+        // 1. Va alla stazione di pulizia.
+        this.obiettivo = { x: st.x, y: st.y - L * 0.2, z: st.z };
+        if (arrivato) {
+          if (st.gambero.chiedi(this)) {
+            c.passo = 1;
+            c.durata = casuale(5, 8);
+          } else {
+            // Il gambero è occupato con un altro cliente: sarà per un'altra volta.
+            this.vaga(larghezza, altezza);
+          }
+        }
+      } else {
+        // 2. Resta quasi fermo, un po' inclinato con la testa in giù, mentre
+        //    il gambero lo pulisce.
+        this.obiettivo = { x: st.x, y: st.y - L * 0.2, z: st.z, lento: true, fermo: true };
+        c.durata -= dt;
+        if (c.durata <= 0) {
+          st.gambero.congeda(this);
+          this.vaga(larghezza, altezza);
+        }
+      }
       return;
     }
 
@@ -249,7 +278,8 @@ export class Pesce {
 
     // Inclinazione verso l'obiettivo, ma mai troppo ripida.
     const inclinazioneVoluta = Math.max(-0.55, Math.min(0.55, Math.atan2(dy, Math.max(Math.abs(dx), L))));
-    this.inclinazione = avvicina(this.inclinazione, ob.attraversa ? 0 : inclinazioneVoluta, n.virata * dt);
+    const inclinazioneFinale = ob.fermo ? 0.22 : ob.attraversa ? 0 : inclinazioneVoluta;
+    this.inclinazione = avvicina(this.inclinazione, inclinazioneFinale, n.virata * dt);
 
     // Velocità: scatti ogni tanto, poi planata; più lento vicino all'obiettivo.
     this.prossimoScatto -= dt;
@@ -265,6 +295,7 @@ export class Pesce {
     let voluta = this.velocitaVoluta * Math.min(1, Math.max(0.15, distanza / (L * 3)));
     if (staGirando) voluta *= 0.35;
     if (ob.attraversa) voluta = 0.3;
+    if (ob.fermo) voluta = Math.min(voluta, 0.1);
     // Accelera in fretta, rallenta piano (planata).
     const accelera = voluta > this.velocita ? 4 : 1.2;
     this.velocita = avvicina(this.velocita, voluta, accelera * dt);

@@ -81,7 +81,7 @@ export class Lontananza {
     const fuori = a.verso > 0 ? a.x > larghezza + a.margine : a.x < -a.margine;
     if (fuori) {
       this.attivo = null;
-      this.attesa = casuale(35, 80);
+      this.attesa = casuale(25, 55);
     }
   }
 

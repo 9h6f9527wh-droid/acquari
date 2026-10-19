@@ -175,9 +175,9 @@ export const SPECIE = {
     ],
     occhio: { dove: 0.1, misura: 0.16 },
     nuoto: {
-      crociera: 0.5, // è un pesce calmo: resta quasi fermo, sospeso
-      scatto: 1.2,
-      virata: 0.9,
+      crociera: 0.8, // è un pesce calmo, che in sosta resta quasi fermo, sospeso
+      scatto: 1.8,
+      virata: 1.1,
       battito: 1.8,
       dimenio: 0.45,
     },

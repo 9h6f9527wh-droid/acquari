@@ -17,10 +17,11 @@ function casuale(min, max) {
 // quanto è veloce, a che altezza nuota e quanto è velato.
 const PASSANTI = {
   banco: { peso: 0.3, lunghezza: 0.11, velocita: 0.075, alto: [0.25, 0.5], velo: 0.5 },
-  squalo: { peso: 0.2, lunghezza: 0.34, velocita: 0.06, alto: [0.22, 0.48], velo: 0.42 },
+  squalo: { peso: 0.12, lunghezza: 0.34, velocita: 0.06, alto: [0.22, 0.48], velo: 0.42 },
+  martello: { peso: 0.1, lunghezza: 0.34, velocita: 0.055, alto: [0.2, 0.46], velo: 0.42 },
   orche: { peso: 0.14, lunghezza: 0.4, velocita: 0.065, alto: [0.2, 0.42], velo: 0.4 },
   manta: { peso: 0.14, lunghezza: 0.3, velocita: 0.045, alto: [0.2, 0.45], velo: 0.42 },
-  balena: { peso: 0.11, lunghezza: 0.95, velocita: 0.028, alto: [0.14, 0.26], velo: 0.28 },
+  balena: { peso: 0.11, lunghezza: 0.65, velocita: 0.03, alto: [0.15, 0.28], velo: 0.3 },
   piovra: { peso: 0.11, lunghezza: 0.3, velocita: 0.05, alto: [0.25, 0.5], velo: 0.42 },
 };
 
@@ -117,7 +118,7 @@ export class Lontananza {
       disegnaOrca(c, 0, 0, a.L, a.verso, a.tempo * 2.2);
       disegnaOrca(c, -a.verso * a.L * 0.75, a.L * 0.22, a.L * 0.55, a.verso, a.tempo * 2.6 + 1);
     } else {
-      const disegni = { squalo: disegnaSqualo, manta: disegnaManta, balena: disegnaBalena, piovra: disegnaPiovra };
+      const disegni = { squalo: disegnaSqualo, martello: disegnaMartello, manta: disegnaManta, balena: disegnaBalena, piovra: disegnaPiovra };
       disegni[a.tipo](c, 0, 0, a.L, a.verso, a.tempo);
     }
     ctx.save();
@@ -228,6 +229,40 @@ function disegnaSqualo(ctx, x, y, L, verso, t) {
   });
 }
 
+// Squalo martello, visto dall'alto (di lato la testa a "T" quasi non si
+// vedrebbe): la testa larga come un martello, le pinne pettorali aperte e il
+// corpo che ondeggia a destra e sinistra mentre nuota.
+function disegnaMartello(ctx, x, y, L, verso, t) {
+  inPosizione(ctx, x, y, verso, () => {
+    sagoma(ctx, [
+      ['M', 0.36, -0.05],
+      ['Q', 0.37, -0.15, 0.36, -0.22], // un lato del martello, piegato un po' indietro
+      ['Q', 0.41, -0.25, 0.46, -0.22],
+      ['Q', 0.52, -0.1, 0.53, 0.0], // il davanti della testa
+      ['Q', 0.52, 0.1, 0.46, 0.22],
+      ['Q', 0.41, 0.25, 0.36, 0.22], // l'altro lato del martello
+      ['Q', 0.37, 0.15, 0.36, 0.05],
+      ['Q', 0.28, 0.08, 0.18, 0.08],
+      ['L', 0.02, 0.24], // pinna pettorale
+      ['L', 0.08, 0.075],
+      ['Q', -0.1, 0.065, -0.2, 0.05],
+      ['L', -0.26, 0.1], // pinna pelvica
+      ['L', -0.27, 0.04],
+      ['Q', -0.36, 0.028, -0.44, 0.016],
+      ['L', -0.62, 0.03], // coda, vista dall'alto: sottile e lunga
+      ['L', -0.62, -0.03],
+      ['L', -0.44, -0.016],
+      ['Q', -0.36, -0.028, -0.27, -0.04],
+      ['L', -0.26, -0.1],
+      ['L', -0.2, -0.05],
+      ['Q', -0.1, -0.065, 0.08, -0.075],
+      ['L', 0.02, -0.24],
+      ['L', 0.18, -0.08],
+      ['Q', 0.28, -0.08, 0.36, -0.05],
+    ], L, codaCheBatte(t * 3, 0.55));
+  });
+}
+
 function disegnaOrca(ctx, x, y, L, verso, fase) {
   inPosizione(ctx, x, y, verso, () => {
     sagoma(ctx, [
@@ -251,7 +286,7 @@ function disegnaOrca(ctx, x, y, L, verso, fase) {
 
 function disegnaBalena(ctx, x, y, L, verso, t) {
   inPosizione(ctx, x, y, verso, () => {
-    // Megattera: corpo lungo, piccola gobba, pinne pettorali lunghissime.
+    // Megattera: corpo lungo, piccola gobba, pinne pettorali lunghe.
     sagoma(ctx, [
       ['M', 0.5, 0.0],
       ['Q', 0.48, -0.06, 0.3, -0.09],
@@ -264,8 +299,8 @@ function disegnaBalena(ctx, x, y, L, verso, t) {
       ['Q', -0.5, 0.04, -0.55, 0.11],
       ['Q', -0.48, 0.05, -0.42, 0.03],
       ['Q', -0.1, 0.15, 0.2, 0.11],
-      ['Q', 0.05, 0.25, -0.08, 0.4], // pinna pettorale lunghissima
-      ['Q', 0.1, 0.24, 0.26, 0.11],
+      ['Q', 0.12, 0.19, 0.03, 0.26], // pinna pettorale lunga (ma non troppo)
+      ['Q', 0.15, 0.17, 0.26, 0.11],
       ['Q', 0.44, 0.08, 0.5, 0.0],
     ], L, codaCheBatte(t * 1.1, 0.35));
   });

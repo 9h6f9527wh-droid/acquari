@@ -1,4 +1,6 @@
 // Disegno di un pesce, nello stesso stile dipinto del resto della vasca.
+// Tutto quello che cambia da specie a specie (forma, pinne, coda, disegni
+// sulla pelle, colori) sta nella sua scheda in pesci/specie.js.
 //
 // Il pesce è disegnato "di profilo", con il muso verso destra e il centro
 // nell'origine; poi lo spostiamo, lo inclinamo e lo specchiamo se guarda a
@@ -6,7 +8,8 @@
 //
 // Il corpo si piega come un'onda che va dalla testa alla coda: la testa si
 // muove poco, la coda molto. L'ordine di disegno conta:
-//   pinne dietro (dorsale, anale, coda) → corpo → bande → pinna pettorale → occhio.
+//   pinne dietro (dorsali, anali, ventrale, coda) → corpo → disegni sulla pelle
+//   → pinna pettorale → occhio.
 
 import { velaColore, hsl } from '../util/colore.js';
 
@@ -28,11 +31,24 @@ function profilo(specie, s) {
   return p[p.length - 1][1];
 }
 
+// Quanto è alta una pinna nel punto q (da 0 = inizio a 1 = fine della pinna).
+const FORME_PINNA = {
+  // Parte davanti più bassa e spinosa, parte dietro più alta e morbida.
+  doppia: (q) => (q < 0.42 ? 0.55 + 0.2 * Math.sin((q / 0.42) * Math.PI) : 0.6 + 0.4 * Math.sin(((q - 0.42) / 0.58) * Math.PI)) * Math.sin(q * Math.PI) ** 0.7,
+  // Lunga e bassa, quasi uguale per tutta la lunghezza.
+  lunga: (q) => Math.sin(q * Math.PI) ** 0.45,
+  // Alta e appuntita.
+  spina: (q) => Math.sin(q * Math.PI) ** 1.3,
+  // Si alza e si allunga verso il fondo, come una vela.
+  vela: (q) => Math.sin(Math.min(1, q * 1.15) * Math.PI * 0.5) ** 0.8 * (1 - Math.max(0, q - 0.85) * 4),
+};
+
 export function disegnaPesce(ctx, pesce, larghezza, altezza) {
   const sp = pesce.specie;
   const L = pesce.lunghezza(larghezza, altezza);
   const Lc = L * 0.8; // corpo senza la coda
   const H = L * sp.altezza;
+  const t = pesce.fase;
 
   // Colori velati dall'acqua (in base a z) e scuriti se è nella grotta.
   const colori = {};
@@ -49,13 +65,13 @@ export function disegnaPesce(ctx, pesce, larghezza, altezza) {
     spina.push({
       s,
       x: Lc / 2 - s * Lc,
-      y: Math.sin(pesce.fase - s * 2.6) * onda * s * s * L * 0.07,
+      y: Math.sin(t - s * 2.6) * onda * s * s * L * 0.07,
       h: profilo(sp, s) * H * 0.5,
     });
   }
   const coda = spina[PUNTI];
   const angoloCoda = Math.atan2(coda.y - spina[PUNTI - 2].y, spina[PUNTI - 2].x - coda.x);
-  // Punto del bordo superiore/inferiore in s.
+  // Punti del bordo superiore/inferiore, e un punto qualsiasi (s, v) del corpo.
   const sopra = (s) => {
     const p = puntoSpina(spina, s);
     return { x: p.x, y: p.y - p.h };
@@ -63,6 +79,10 @@ export function disegnaPesce(ctx, pesce, larghezza, altezza) {
   const sotto = (s) => {
     const p = puntoSpina(spina, s);
     return { x: p.x, y: p.y + p.h * 0.95 };
+  };
+  const sulCorpo = (s, v) => {
+    const p = puntoSpina(spina, Math.min(1, s));
+    return { x: p.x - Math.max(0, s - 1) * Lc, y: p.y + v * p.h };
   };
 
   ctx.save();
@@ -73,73 +93,29 @@ export function disegnaPesce(ctx, pesce, larghezza, altezza) {
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
   const bordo = Math.max(0.8, L * 0.014);
+  const pinne = sp.pinne;
 
-  // --- Pinna dorsale (dietro il corpo): due lobi, quello davanti più basso ---
-  const t = pesce.fase;
-  ctx.beginPath();
-  const iniz = 0.3;
-  const fine = 0.82;
-  for (let i = 0; i <= 16; i++) {
-    const s = iniz + ((fine - iniz) * i) / 16;
-    const b = sopra(s);
-    if (i === 0) ctx.moveTo(b.x, b.y + H * 0.05);
-    const q = (s - iniz) / (fine - iniz);
-    // Parte davanti più bassa e spinosa, parte dietro più alta e morbida.
-    const lobo = q < 0.42 ? 0.55 + 0.2 * Math.sin((q / 0.42) * Math.PI) : 0.6 + 0.4 * Math.sin(((q - 0.42) / 0.58) * Math.PI);
-    const alto = H * 0.2 * lobo * Math.sin(q * Math.PI) ** 0.7 * (1 + 0.05 * Math.sin(t * 1.3 + q * 4));
-    ctx.lineTo(b.x - alto * 0.35, b.y - alto);
-  }
-  const fineD = sopra(fine);
-  ctx.lineTo(fineD.x, fineD.y + H * 0.05);
-  ctx.closePath();
-  pinna(ctx, colori, bordo, 0.78);
-  raggi(ctx, sopra, iniz, fine, -H * 0.2, colori, L);
+  // --- Pinne dorsali e anali (dietro il corpo) ---
+  for (const pd of pinne.dorsali) pinnaLunga(ctx, pd, sopra, -1, H, L, t, colori, bordo);
+  for (const pa of pinne.anali) pinnaLunga(ctx, pa, sotto, 1, H, L, t, colori, bordo);
 
-  // --- Pinna anale (sotto) ---
-  ctx.beginPath();
-  const a0 = sotto(0.58);
-  ctx.moveTo(a0.x, a0.y - H * 0.05);
-  for (let i = 0; i <= 10; i++) {
-    const q = i / 10;
-    const b = sotto(0.58 + q * 0.24);
-    const basso = H * 0.18 * Math.sin(q * Math.PI) ** 0.7 * (1 + 0.06 * Math.sin(t * 1.1 + q * 3));
-    ctx.lineTo(b.x - basso * 0.3, b.y + basso);
-  }
-  const a1 = sotto(0.82);
-  ctx.lineTo(a1.x, a1.y - H * 0.05);
-  ctx.closePath();
-  pinna(ctx, colori, bordo, 0.78);
-  raggi(ctx, sotto, 0.6, 0.8, H * 0.16, colori, L);
-
-  // --- Pinna ventrale (piccola, sotto il petto) ---
-  const v = sotto(0.32);
-  ctx.beginPath();
-  ctx.ellipse(v.x - L * 0.03, v.y + H * 0.06, L * 0.055, H * 0.06, 0.5 + 0.15 * Math.sin(t), 0, Math.PI * 2);
-  pinna(ctx, colori, bordo);
-
-  // --- Coda: un ventaglio arrotondato che segue il colpo della coda ---
-  ctx.save();
-  ctx.translate(coda.x, coda.y);
-  ctx.rotate(-angoloCoda * 1.6);
-  const Lt = L * 0.26;
-  const hc = coda.h;
-  ctx.beginPath();
-  ctx.moveTo(0, -hc);
-  ctx.quadraticCurveTo(-Lt * 0.5, -hc - Lt * 0.35, -Lt, -Lt * 0.62);
-  ctx.quadraticCurveTo(-Lt * 1.12, 0, -Lt, Lt * 0.62);
-  ctx.quadraticCurveTo(-Lt * 0.5, hc + Lt * 0.35, 0, hc);
-  ctx.closePath();
-  pinna(ctx, colori, bordo);
-  // Raggi della coda.
-  ctx.strokeStyle = hsl(colori.pinne, -12, 0.35);
-  ctx.lineWidth = Math.max(0.5, L * 0.006);
-  for (let k = -2; k <= 2; k++) {
+  // --- Pinna ventrale (sotto il petto) ---
+  if (pinne.ventrale) {
+    const m = pinne.ventrale.misura;
+    const v = sotto(0.32);
+    ctx.save();
+    ctx.translate(v.x, v.y);
+    ctx.rotate(0.6 + 0.15 * Math.sin(t));
     ctx.beginPath();
-    ctx.moveTo(0, k * hc * 0.3);
-    ctx.lineTo(-Lt * 0.92, k * Lt * 0.26);
-    ctx.stroke();
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(-L * 0.04 * m, H * 0.12 * m, -L * 0.11 * m, H * 0.02);
+    ctx.quadraticCurveTo(-L * 0.05 * m, -H * 0.02, 0, 0);
+    pinna(ctx, colori, bordo, pinne.ventrale.scura ? 0.9 : 0.78, pinne.ventrale.scura ? 'bordi' : 'pinne');
+    ctx.restore();
   }
-  ctx.restore();
+
+  // --- Coda ---
+  disegnaCoda(ctx, pinne.coda, coda, angoloCoda, L, colori, bordo);
 
   // --- Corpo ---
   ctx.beginPath();
@@ -163,24 +139,7 @@ export function disegnaPesce(ctx, pesce, larghezza, altezza) {
 
   ctx.save();
   ctx.clip();
-  // Bande bianche con il bordo nero. Sono un po' curve, come quelle vere.
-  for (const banda of sp.bande) {
-    for (const [extra, colore] of [[0.022, colori.bordi], [0, colori.bande]]) {
-      const w = banda.larghezza + extra;
-      const s0 = banda.dove - w;
-      const s1 = banda.dove + w;
-      const top0 = puntoSpina(spina, s0);
-      const top1 = puntoSpina(spina, s1);
-      ctx.beginPath();
-      ctx.moveTo(top0.x, top0.y - H);
-      ctx.quadraticCurveTo(top0.x + banda.curva * Lc, top0.y, top0.x, top0.y + H);
-      ctx.lineTo(top1.x, top1.y + H);
-      ctx.quadraticCurveTo(top1.x + banda.curva * Lc, top1.y, top1.x, top1.y - H);
-      ctx.closePath();
-      ctx.fillStyle = hsl(colore);
-      ctx.fill();
-    }
-  }
+  for (const decoro of sp.decori) disegnaDecoro(ctx, decoro, spina, sulCorpo, H, Lc, L, colori);
   // Ombra sul ventre e luce sul dorso: danno volume.
   const volume = ctx.createLinearGradient(0, -H * 0.5, 0, H * 0.5);
   volume.addColorStop(0, 'rgba(255, 245, 210, 0.15)');
@@ -204,22 +163,32 @@ export function disegnaPesce(ctx, pesce, larghezza, altezza) {
   ctx.lineWidth = bordo * 0.5;
   ctx.stroke();
 
+  // "Bisturi" del pesce chirurgo: una piccola spina gialla vicino alla coda.
+  if (sp.bisturi) {
+    const b = sulCorpo(0.9, 0.05);
+    ctx.beginPath();
+    ctx.ellipse(b.x, b.y, L * 0.03, H * 0.04, 0, 0, Math.PI * 2);
+    ctx.fillStyle = hsl(colori.coda, 0, 0.9);
+    ctx.fill();
+  }
+
   // --- Pinna pettorale (sul fianco, sopra il corpo): sbatte come un remo ---
   const pp = puntoSpina(spina, 0.3);
   ctx.save();
   ctx.translate(pp.x, pp.y + pp.h * 0.25);
-  ctx.rotate(0.5 + 0.35 * Math.sin(pesce.fase * 1.4));
+  ctx.rotate(0.5 + 0.35 * Math.sin(t * 1.4));
   // Trasparente, a forma di goccia, con qualche raggio: niente contorno spesso.
   ctx.beginPath();
   ctx.moveTo(0, 0);
   ctx.quadraticCurveTo(-L * 0.06, -H * 0.13, -L * 0.13, -H * 0.02);
   ctx.quadraticCurveTo(-L * 0.07, H * 0.1, 0, 0);
-  ctx.fillStyle = hsl(colori.pinne, 10, 0.55);
+  const coloreP = colori[pinne.pettorale || 'pinne'];
+  ctx.fillStyle = hsl(coloreP, 10, 0.55);
   ctx.fill();
   ctx.strokeStyle = hsl(colori.bordi, 0, 0.45);
   ctx.lineWidth = bordo * 0.5;
   ctx.stroke();
-  ctx.strokeStyle = hsl(colori.pinne, -15, 0.35);
+  ctx.strokeStyle = hsl(coloreP, -15, 0.35);
   for (const k of [-0.06, 0, 0.05]) {
     ctx.beginPath();
     ctx.moveTo(0, 0);
@@ -229,8 +198,8 @@ export function disegnaPesce(ctx, pesce, larghezza, altezza) {
   ctx.restore();
 
   // --- Occhio ---
-  const oc = puntoSpina(spina, 0.1);
-  const r = H * 0.11;
+  const oc = puntoSpina(spina, sp.occhio.dove);
+  const r = H * sp.occhio.misura;
   const ox = oc.x;
   const oy = oc.y - H * 0.08;
   ctx.beginPath();
@@ -256,6 +225,150 @@ export function disegnaPesce(ctx, pesce, larghezza, altezza) {
   ctx.restore();
 }
 
+// Pinna dorsale (lato = -1, verso l'alto) o anale (lato = 1, verso il basso).
+function pinnaLunga(ctx, p, bordoCorpo, lato, H, L, t, colori, bordo) {
+  const forma = FORME_PINNA[p.forma];
+  const passi = 16;
+  ctx.beginPath();
+  const a = bordoCorpo(p.da);
+  ctx.moveTo(a.x, a.y - lato * H * 0.05);
+  for (let i = 0; i <= passi; i++) {
+    const q = i / passi;
+    const b = bordoCorpo(p.da + (p.a - p.da) * q);
+    // Ondeggia appena, come mossa dall'acqua.
+    const alto = H * p.altezza * forma(q) * (1 + 0.05 * Math.sin(t * 1.3 + q * 4));
+    ctx.lineTo(b.x - alto * p.piega, b.y + lato * alto);
+  }
+  const z = bordoCorpo(p.a);
+  ctx.lineTo(z.x, z.y - lato * H * 0.05);
+  ctx.closePath();
+  // Le pinne "scure" (cardinale di Banggai) usano il colore delle barre nere.
+  const nomeColore = p.scura && colori.barre ? 'barre' : 'pinne';
+  pinna(ctx, colori, bordo, p.scura ? 0.72 : 0.78, nomeColore, p.bordoNero);
+  // Raggi della pinna: linee sottili dalla base verso il bordo.
+  ctx.save();
+  ctx.clip();
+  ctx.strokeStyle = hsl(colori.pinne, -18, 0.35);
+  ctx.lineWidth = Math.max(0.5, L * 0.005);
+  for (let i = 1; i < 8; i++) {
+    const q = i / 8;
+    const b = bordoCorpo(p.da + (p.a - p.da) * q);
+    const lungo = H * p.altezza * forma(q) * 1.1;
+    ctx.beginPath();
+    ctx.moveTo(b.x, b.y);
+    ctx.lineTo(b.x - lungo * p.piega, b.y + lato * lungo);
+    ctx.stroke();
+  }
+  // Puntini bianchi sulle pinne (cardinale di Banggai).
+  if (p.puntini && colori.puntini) {
+    ctx.fillStyle = hsl(colori.puntini, 0, 0.85);
+    for (let i = 1; i < 7; i++) {
+      const q = i / 7;
+      const b = bordoCorpo(p.da + (p.a - p.da) * q);
+      const lungo = H * p.altezza * forma(q);
+      for (const f of [0.35, 0.7]) {
+        ctx.beginPath();
+        ctx.arc(b.x - lungo * p.piega * f, b.y + lato * lungo * f, Math.max(0.6, L * 0.01), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+  ctx.restore();
+}
+
+function disegnaCoda(ctx, c, coda, angoloCoda, L, colori, bordo) {
+  ctx.save();
+  ctx.translate(coda.x, coda.y);
+  ctx.rotate(-angoloCoda * 1.6);
+  const Lt = L * c.lunghezza;
+  const hc = coda.h;
+  ctx.beginPath();
+  ctx.moveTo(0, -hc);
+  if (c.forma === 'ventaglio') {
+    ctx.quadraticCurveTo(-Lt * 0.5, -hc - Lt * 0.35, -Lt, -Lt * 0.62);
+    ctx.quadraticCurveTo(-Lt * 1.12, 0, -Lt, Lt * 0.62);
+    ctx.quadraticCurveTo(-Lt * 0.5, hc + Lt * 0.35, 0, hc);
+  } else if (c.forma === 'tronca') {
+    ctx.quadraticCurveTo(-Lt * 0.5, -hc - Lt * 0.3, -Lt * 0.95, -Lt * 0.68);
+    ctx.quadraticCurveTo(-Lt * 0.78, 0, -Lt * 0.95, Lt * 0.68);
+    ctx.quadraticCurveTo(-Lt * 0.5, hc + Lt * 0.3, 0, hc);
+  } else {
+    // Forcuta: due lobi lunghi con un'incavatura profonda in mezzo.
+    ctx.quadraticCurveTo(-Lt * 0.55, -hc - Lt * 0.2, -Lt, -Lt * 0.72);
+    ctx.quadraticCurveTo(-Lt * 0.7, -Lt * 0.25, -Lt * 0.42, 0);
+    ctx.quadraticCurveTo(-Lt * 0.7, Lt * 0.25, -Lt, Lt * 0.72);
+    ctx.quadraticCurveTo(-Lt * 0.55, hc + Lt * 0.2, 0, hc);
+  }
+  ctx.closePath();
+  pinna(ctx, colori, bordo, 0.85, 'coda', c.bordi);
+  // Raggi della coda.
+  ctx.strokeStyle = hsl(colori.coda, -14, 0.35);
+  ctx.lineWidth = Math.max(0.5, L * 0.006);
+  for (let k = -2; k <= 2; k++) {
+    ctx.beginPath();
+    ctx.moveTo(0, k * hc * 0.3);
+    ctx.lineTo(-Lt * (c.forma === 'forcuta' ? 0.6 + Math.abs(k) * 0.15 : 0.88), k * Lt * 0.26);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function disegnaDecoro(ctx, d, spina, sulCorpo, H, Lc, L, colori) {
+  if (d.tipo === 'bande') {
+    // Strisce verticali un po' curve; con il bordo, prima si disegna la
+    // striscia scura un po' più larga e poi quella chiara sopra.
+    const passate = d.bordo ? [[0.022, d.bordo], [0, d.colore]] : [[0, d.colore]];
+    for (const banda of d.elenco) {
+      for (const [extra, nome] of passate) {
+        const w = banda.larghezza + extra;
+        const top0 = puntoSpina(spina, banda.dove - w);
+        const top1 = puntoSpina(spina, banda.dove + w);
+        ctx.beginPath();
+        ctx.moveTo(top0.x, top0.y - H);
+        ctx.quadraticCurveTo(top0.x + banda.curva * Lc, top0.y, top0.x, top0.y + H);
+        ctx.lineTo(top1.x, top1.y + H);
+        ctx.quadraticCurveTo(top1.x + banda.curva * Lc, top1.y, top1.x, top1.y - H);
+        ctx.closePath();
+        ctx.fillStyle = hsl(colori[nome]);
+        ctx.fill();
+      }
+    }
+  } else if (d.tipo === 'forma') {
+    // Una macchia dai contorni morbidi; i "buchi" vengono riempiti con il
+    // colore del corpo, così sembrano parti del corpo rimaste libere.
+    tracciaMorbida(ctx, d.punti.map(([s, v]) => sulCorpo(s, v)));
+    ctx.fillStyle = hsl(colori[d.colore]);
+    ctx.fill();
+    for (const buco of d.buchi || []) {
+      tracciaMorbida(ctx, buco.map(([s, v]) => sulCorpo(s, v)));
+      ctx.fillStyle = hsl(colori.corpo, 2);
+      ctx.fill();
+    }
+  } else if (d.tipo === 'puntini') {
+    ctx.fillStyle = hsl(colori[d.colore], 0, 0.85);
+    for (const p of d.elenco) {
+      const q = sulCorpo(p.s, p.v);
+      ctx.beginPath();
+      ctx.arc(q.x, q.y, Math.max(0.6, p.r * L), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
+
+// Disegna una forma morbida che passa vicino ai punti dati (chiusa).
+function tracciaMorbida(ctx, punti) {
+  const n = punti.length;
+  const meta = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+  const inizio = meta(punti[n - 1], punti[0]);
+  ctx.beginPath();
+  ctx.moveTo(inizio.x, inizio.y);
+  for (let i = 0; i < n; i++) {
+    const m = meta(punti[i], punti[(i + 1) % n]);
+    ctx.quadraticCurveTo(punti[i].x, punti[i].y, m.x, m.y);
+  }
+  ctx.closePath();
+}
+
 // Punto della spina dorsale in una posizione s qualsiasi (tra due punti calcolati).
 function puntoSpina(spina, s) {
   const k = Math.max(0, Math.min(spina.length - 1.001, s * (spina.length - 1)));
@@ -266,27 +379,13 @@ function puntoSpina(spina, s) {
   return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, h: a.h + (b.h - a.h) * f };
 }
 
-// Raggi di una pinna: linee sottili dalla base verso il bordo.
-function raggi(ctx, bordoCorpo, s0, s1, altezza, colori, L) {
-  ctx.strokeStyle = hsl(colori.pinne, -18, 0.35);
-  ctx.lineWidth = Math.max(0.5, L * 0.005);
-  for (let i = 1; i < 7; i++) {
-    const b = bordoCorpo(s0 + ((s1 - s0) * i) / 7);
-    const q = i / 7;
-    const lungo = altezza * Math.sin(q * Math.PI) ** 0.7;
-    ctx.beginPath();
-    ctx.moveTo(b.x, b.y);
-    ctx.lineTo(b.x - Math.abs(lungo) * 0.35, b.y + lungo * 0.9);
-    ctx.stroke();
-  }
-}
-
-// Colora una pinna: semitrasparente, con il bordo nero tipico del pagliaccio.
-function pinna(ctx, colori, bordo, trasparenza = 0.88) {
+// Colora una pinna: semitrasparente, con il bordo scuro. "bordoNero" lo rende
+// più marcato (come nel pesce chirurgo).
+function pinna(ctx, colori, bordo, trasparenza = 0.88, nome = 'pinne', bordoNero = true) {
   const alfa = ctx.globalAlpha;
-  ctx.fillStyle = hsl(colori.pinne, 6, trasparenza * alfa);
+  ctx.fillStyle = hsl(colori[nome], 6, trasparenza * alfa);
   ctx.fill();
-  ctx.strokeStyle = hsl(colori.bordi, 0, 0.75 * alfa);
+  ctx.strokeStyle = hsl(colori.bordi, 0, (bordoNero ? 0.75 : 0.35) * alfa);
   ctx.lineWidth = bordo;
   ctx.stroke();
 }

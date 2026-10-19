@@ -11,8 +11,10 @@
 //    piano da 1 a -1, e a metà giro lo vediamo di taglio, più stretto);
 //  - alterna scatti e planate: accelera di colpo, poi scivola rallentando.
 //
-// Cosa fa (i "comportamenti"):
+// Cosa fa (i "comportamenti", con frequenze diverse per ogni specie):
 //  - vaga:      sceglie un punto qualsiasi della vasca e ci va;
+//  - perlustra: nuota piano vicino al fondo, tra rocce e coralli;
+//  - banco:     resta con il suo gruppo (vedi banco.js);
 //  - anemone:   va a giocare tra i tentacoli dell'anemone, la sua casa;
 //  - grotta:    entra nella grotta dello scoglio, riposa un po' al buio ed esce;
 //  - passaggio: attraversa il tunnel dello scoglio e sbuca dall'altra parte.
@@ -60,12 +62,31 @@ export class Pesce {
 
   // ---------- Scelta di cosa fare ----------
 
+  // Sceglie il prossimo comportamento a caso, ma secondo le abitudini della
+  // sua specie (per esempio il pagliaccio va spesso all'anemone).
   scegli(larghezza, altezza) {
-    const r = Math.random();
-    if (r < 0.55) this.vaga(larghezza, altezza);
-    else if (r < 0.72) this.inizia('anemone');
-    else if (r < 0.88) this.inizia('grotta');
-    else this.inizia('passaggio');
+    const scelte = Object.entries(this.specie.comportamenti);
+    const totale = scelte.reduce((somma, [, peso]) => somma + peso, 0);
+    let r = Math.random() * totale;
+    for (const [tipo, peso] of scelte) {
+      r -= peso;
+      if (r <= 0) {
+        if (tipo === 'vaga') this.vaga(larghezza, altezza);
+        else if (tipo === 'perlustra') this.perlustra(larghezza, altezza);
+        else this.inizia(tipo);
+        return;
+      }
+    }
+    this.vaga(larghezza, altezza);
+  }
+
+  perlustra(larghezza, altezza) {
+    const z = Math.min(Z_MAX, Math.max(Z_MIN, this.z + casuale(-0.2, 0.2)));
+    const x = casuale(0.08, 0.92) * larghezza;
+    const fondo = this.fondale.profondita(x / larghezza, z) * altezza;
+    const L = this.lunghezza(larghezza, altezza);
+    this.comportamento = { tipo: 'vaga' };
+    this.obiettivo = { x, y: fondo - casuale(1.2, 2.5) * L, z, lento: true };
   }
 
   vaga(larghezza, altezza) {
@@ -92,6 +113,12 @@ export class Pesce {
 
     if (c.tipo === 'vaga') {
       if (arrivato) this.scegli(larghezza, altezza);
+      return;
+    }
+
+    if (c.tipo === 'banco') {
+      // Il posto lo decide il banco: ognuno ha il suo, vicino agli altri.
+      this.obiettivo = this.banco.posto(this, larghezza, altezza);
       return;
     }
 
@@ -214,7 +241,9 @@ export class Pesce {
     const distanza = Math.hypot(dx, dy);
 
     // Girarsi: se l'obiettivo sta dall'altra parte, il pesce ruota su se stesso.
+    // In banco, quando è al suo posto, guarda dalla stessa parte del gruppo.
     if (Math.abs(dx) > L * 0.4 && Math.sign(dx) !== this.direzione) this.direzione = Math.sign(dx);
+    else if (ob.direzione && distanza < L * 0.8) this.direzione = ob.direzione;
     this.verso = avvicina(this.verso, this.direzione, dt * 2.6);
     const staGirando = Math.abs(this.verso) < 0.95;
 

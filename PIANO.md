@@ -54,15 +54,16 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 - **Grande relitto** sullo sfondo: solo una sagoma scura nella foschia, "vedo e non vedo".
 - Pochi dettagli sul fondo, senza esagerare: una stella marina e qualche conchiglia.
 
-### 🟡 Fase 3 — Il primo pesce
+### ✅ Fase 3 — Il primo pesce
 - *Da preparare qui:* il pesce sa dov'è la tana nello scoglio (`scoglio.tana`) e ogni tanto ci entra o ci passa attraverso.
 - Un pesce semi-realistico: corpo sfumato, coda e pinne che si muovono a ritmo del nuoto.
 - Movimento naturale: sceglie dove andare, accelera, rallenta, gira con una curva morbida, evita i bordi.
 - *Scelto:* una **coppia di pesci pagliaccio** (vivono in coppia e abitano gli anemoni: la loro casa è l'anemone arancione).
 
-### ⬜ Fase 4 — Più specie e i banchi
-- Due specie nuove: **pesce chirurgo blu** e **castagnole** (piccoli pesci verde-azzurri), con forme, colori e velocità proprie.
-- Nuotano **in banco**: restano vicine e si muovono insieme.
+### 🟡 Fase 4 — Più specie e i banchi
+- **Pesce chirurgo blu**: insieme alla coppia di pagliacci (più avanti mangerà le alghe).
+- Un piccolo gruppo di **pesci cardinale di Banggai**: argentati, con strisce nere e puntini bianchi; stanno quasi fermi vicino a un corallo e si muovono **in banco**, insieme e piano piano.
+- *Scartate:* le castagnole (troppo banali, occuperebbero solo spazio).
 - 🎯 *Cosa provi:* controlliamo che resti fluido con 30-40 pesci.
 
 ### ⬜ Fase 4b — Il banco lontano *(aggiunta su richiesta)*
@@ -204,3 +205,4 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 | 2b | 2026-10-19 | Nuovo `js/disegno/caustiche.js`: **rete di luce ondulata** sulla sabbia, due strati che scorrono in direzioni diverse (tessere preparate una volta sola, già schiacciate in prospettiva). **Relitto** di nave sullo sfondo tra le colline: sagoma scura velata dalla foschia, con contorni sfumati, alberi spezzati, sartie e oblò. Pochi dettagli: una **stella marina** sul fianco dello scoglio e tre **conchiglie** sulla sabbia. In attesa di prova sull'iPad. |
 | 3 | 2026-10-19 | Nuova cartella `js/pesci/`: `specie.js` (scheda del pesce pagliaccio: forma, colori, bande, modo di nuotare), `pesce.js` (il "cervello": vaga, va all'anemone, entra nella grotta a riposare, attraversa il tunnel; scatti e planate, girate su se stesso, inclinazione limitata, profondità z, non attraversa la roccia ma ci gira intorno), `pesci.js` (crea la coppia e la disegna nello strato giusto: dietro, nella tana o davanti). `js/disegno/pesce.js`: corpo che ondeggia, bande bianche bordate di nero, pinne trasparenti con raggi, coda a ventaglio, occhio con riflesso, ombra sulla sabbia; nella grotta si scurisce. `js/util/colore.js`: velo d'acqua condiviso con le piante. Provato con una simulazione di 60 secondi: entrano ed escono da grotta e tunnel senza bloccarsi. In attesa di prova sull'iPad. |
 | — | 2026-10-19 | Scelto insieme il **cast della vasca**: nuove fasi 4c (gambero pulitore, paguro), 4d (polpo), 4e (seppia fiammeggiante, cavalluccio), 4f (anguille giardino, nudibranco), 4g (pesce palla), 5c (medusa che di notte diventa blu fluo); pesce scorpione con i predatori (Fase 12); tartaruga e razza come premi (Fase 20). |
+| 4 | 2026-10-19 | Le schede in `pesci/specie.js` ora descrivono tutto (forma, pinne dorsali/anali, tipo di coda, disegni sulla pelle, abitudini) e `disegno/pesce.js` disegna qualsiasi specie leggendole. Nuove specie: **chirurgo blu** (tavolozza nera, coda gialla, "bisturi"; gira per la vasca e perlustra il fondo) e **5 cardinali di Banggai** (barre nere, puntini bianchi, pinne a vela, coda forcuta). Nuovo `pesci/banco.js`: punto di ritrovo vicino a un corallo, ognuno al suo posto, il gruppo si sposta insieme ogni tanto e si gira "a onda". Simulazione di 90 secondi: nessun errore, nessun pesce fuori vasca, banco unito. In attesa di prova sull'iPad. |

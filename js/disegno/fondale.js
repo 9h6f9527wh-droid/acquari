@@ -414,11 +414,22 @@ export class Fondale {
 
   dipingiPrimoPiano(l, a, densita) {
     const ctx = this.preparaFoglio(this.primoPiano, l, a, densita);
-    this.dipingiOggetti(ctx, l, a, densita, (z) => z >= Z_SCOGLIO);
+    this.ritagli = [];
+    this.dipingiOggetti(ctx, l, a, densita, (z) => z >= Z_SCOGLIO, true);
+  }
+
+  // Ridisegna sopra un animale gli oggetti che gli stanno DAVANTI (con z più
+  // grande) e che toccano il rettangolo dove si trova: così un animale che
+  // passa dietro un corallo viene nascosto da lui, come succede davvero.
+  ridisegnaDavanti(ctx, z, x0, y0, x1, y1) {
+    for (const r of this.ritagli || []) {
+      if (r.z <= z || r.x > x1 || r.x + r.w < x0 || r.y > y1 || r.y + r.h < y0) continue;
+      ctx.drawImage(r.foglio, r.x, r.y, r.w, r.h);
+    }
   }
 
   // Dipinge rocce e coralli che passano il filtro, dal più lontano al più vicino.
-  dipingiOggetti(ctx, l, a, densita, filtro) {
+  dipingiOggetti(ctx, l, a, densita, filtro, conRitagli = false) {
     const oggetti = [
       ...this.rocce.map((r, indice) => ({ ...r, roccia: true, indice })),
       ...this.coralli.map((c, indice) => ({ ...c, indice })),
@@ -448,6 +459,13 @@ export class Fondale {
           larghezzaBase = misura * (piatti[o.tipo] || 0.55);
         }
       });
+      // Un ritaglio dell'oggetto (senza la sabbia ai piedi), per poterlo
+      // ridisegnare davanti agli animali che gli passano dietro.
+      if (conRitagli) {
+        const m = o.roccia ? larghezzaBase / 2 : o.misura * M * scala;
+        const meta = Math.max(m * 0.75, larghezzaBase * 0.6);
+        this.salvaRitaglio(x - meta, y - m * 1.3, meta * 2, m * 1.6, o.z, densita);
+      }
       this.sabbiaAlPiede(ctx, x, y, larghezzaBase, o.z);
       // Quanto spazio occupa sulla sabbia: serve agli animali che camminano.
       const mezzo = (larghezzaBase / 2) * 1.2;
@@ -469,6 +487,21 @@ export class Fondale {
       if (migliore === null || y < migliore) migliore = y;
     }
     return migliore;
+  }
+
+  // Copia in un foglietto il pezzo del foglio di lavoro con l'oggetto appena dipinto.
+  salvaRitaglio(x, y, w, h, z, densita) {
+    const { l, a } = this.misure;
+    const x0 = Math.max(0, Math.floor(x));
+    const y0 = Math.max(0, Math.floor(y));
+    const x1 = Math.min(l, Math.ceil(x + w));
+    const y1 = Math.min(a, Math.ceil(y + h));
+    if (x1 <= x0 || y1 <= y0) return;
+    const foglio = document.createElement('canvas');
+    foglio.width = Math.round((x1 - x0) * densita);
+    foglio.height = Math.round((y1 - y0) * densita);
+    foglio.getContext('2d').drawImage(this.appoggio.foglio, x0 * densita, y0 * densita, foglio.width, foglio.height, 0, 0, foglio.width, foglio.height);
+    this.ritagli.push({ foglio, x: x0, y: y0, w: x1 - x0, h: y1 - y0, z });
   }
 
   // Dipinge un oggetto su un foglio a parte, poi lo vela d'azzurro tanto più

@@ -271,7 +271,7 @@ export function disegnaPaguro(ctx, p, L, conchiglia) {
   const bianco = hsl(vela({ h: 40, s: 30, l: 92 }, p.z));
   const nero = hsl(vela({ h: 0, s: 0, l: 6 }, p.z));
   // Durante il trasloco il corpo esce dalla conchiglia e si sposta verso l'altra.
-  const spostamento = p.stato === 'esce' ? p.fuori * L * 0.55 : 0;
+  const spostamento = p.stato === 'esce' ? p.fuori * L * 0.7 : 0;
   const fuori = p.fuori;
   const trasloco = p.stato === 'esce' || p.stato === 'entra';
   // Quando cammina la conchiglia dondola appena, a ogni passo, e poggia sulla sabbia.

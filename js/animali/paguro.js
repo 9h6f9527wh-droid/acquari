@@ -10,8 +10,12 @@
 //
 // Come si muove nell'ambiente:
 //  - le zampe poggiano davvero sulla sabbia (vedi zampe.js);
-//  - non attraversa coralli, rocce e conchiglie: quando ne incontra uno ci
-//    passa DAVANTI (più vicino al vetro), cambiando piano la sua profondità;
+//  - cammina su più "livelli": ogni meta ha anche una profondità (più avanti,
+//    verso il vetro, o più indietro), e la profondità cambia SOLO mentre
+//    cammina, piano, in diagonale. Più è indietro, più è piccolo e velato;
+//  - non attraversa coralli, rocce e conchiglie: sceglie mete che non lo
+//    portano dentro a un oggetto alla sua stessa profondità. Può passare
+//    davanti a un oggetto, oppure dietro (e allora l'oggetto lo copre);
 //  - la conchiglia si appoggia sulla sabbia e dondola a ogni passo.
 
 import { Zampe } from './zampe.js';
@@ -27,14 +31,17 @@ export const CONCHIGLIE = [
 ];
 
 const N_ZAMPE = 4;
-const Z_MIN = 0.9;
+// Fascia di sabbia in cui cammina: davanti allo scoglio, fino al vetro.
+const Z_MIN = 0.5;
 const Z_MAX = 0.99;
+// Due cose alla stessa profondità (± questo valore) si scontrano.
+const SPESSORE = 0.07;
 
 export class Paguro {
   constructor(fondale) {
     this.fondale = fondale;
     this.x = null;
-    this.z = 0.92;
+    this.z = 0.97;
     this.verso = 1;
     this.stato = 'cammina';
     this.meta = null;
@@ -58,21 +65,46 @@ export class Paguro {
     return this.fondale.profondita(Math.min(1, Math.max(0, x / larghezza)), this.z) * altezza;
   }
 
-  // Profondità a cui deve stare per non attraversare niente: se davanti a lui
-  // (o sotto di lui) c'è un oggetto, si mette un po' più vicino al vetro.
-  zSicura(x, L) {
-    let z = Z_MIN;
-    const da = Math.min(x - L * 0.8, x + this.verso * L * 1.6);
-    const a = Math.max(x + L * 0.8, x + this.verso * L * 1.6);
+  // Se nel punto (x, z) il paguro finirebbe dentro un oggetto, restituisce il
+  // centro di quell'oggetto; altrimenti null.
+  scontro(x, z, L) {
     for (const o of this.fondale.ingombri || []) {
-      if (o.x1 > da && o.x0 < a && o.z > 0.6) z = Math.max(z, o.z + 0.05);
+      if (o.x1 > x - L * 0.5 && o.x0 < x + L * 0.5 && Math.abs(o.z - z) < SPESSORE) return (o.x0 + o.x1) / 2;
     }
     // Anche la conchiglia vuota è un ostacolo (tranne quando ci va apposta).
-    if (!this.stato.startsWith('verso') && this.stato !== 'esce' && this.stato !== 'entra') {
-      const xv = this.vuota.x * (this.larghezza || 1);
-      if (Math.abs(xv - x) < L * 1.3) z = Math.max(z, this.z0Vuota + 0.05);
+    const xv = this.vuota.x * (this.larghezza || 1);
+    return Math.abs(xv - x) < L * 0.6 && Math.abs(this.z0Vuota - z) < SPESSORE ? xv : null;
+  }
+
+  // Sceglie una nuova meta (x e profondità) controllando che il percorso in
+  // linea retta non attraversi niente. Prova parecchie mete a caso e tiene
+  // la prima libera; se nessuna lo è, la meno "affollata". Se anche quella
+  // urta qualcosa, resta dov'è (e intanto fruga nella sabbia).
+  scegliMeta(larghezza, L) {
+    let migliore = null;
+    // Se parte attaccato a un oggetto, deve allontanarsene (non attraversarlo).
+    const attaccato = this.scontro(this.x, this.z, L);
+    for (let tentativo = 0; tentativo < 30; tentativo++) {
+      const x = casuale(0.08, 0.92) * larghezza;
+      if (attaccato !== null && Math.sign(x - this.x) !== Math.sign(this.x - attaccato)) continue;
+      // Non cambia troppo profondità in una volta sola.
+      const z = Math.min(Z_MAX, Math.max(Z_MIN, this.z + casuale(-0.3, 0.3)));
+      // Se parte già attaccato a un ostacolo può uscirne: contano solo gli
+      // scontri dopo che si è liberato.
+      let urti = 0;
+      let uscito = false;
+      for (let k = 1; k <= 24; k++) {
+        const q = k / 24;
+        const urta = this.scontro(this.x + (x - this.x) * q, this.z + (z - this.z) * q, L) !== null;
+        if (!urta) uscito = true;
+        else if (uscito || attaccato === null || k > 6) urti++;
+      }
+      if (urti === 0) return { x, z };
+      if (!migliore || urti < migliore.urti) migliore = { x, z, urti };
     }
-    return Math.min(Z_MAX, z);
+    // Se è già dentro un ostacolo, la cosa più importante è uscirne.
+    if (!migliore) return { x: this.x + Math.sign(this.x - attaccato || 1) * L * 2, z: this.z };
+    return migliore.urti <= 2 || attaccato !== null ? migliore : { x: this.x, z: this.z };
   }
 
   // Dove i piedi starebbero se fosse fermo.
@@ -85,11 +117,16 @@ export class Paguro {
     this.larghezza = larghezza;
     this.z0Vuota = 0.92;
     const L = this.lunghezza(larghezza, altezza);
-    if (this.x === null) this.x = larghezza * 0.3;
+    if (this.x === null) this.x = larghezza * 0.45;
     let velocita = 0;
 
     if (this.stato === 'cammina') {
-      if (this.meta === null) this.meta = casuale(0.08, 0.92) * larghezza;
+      if (this.meta === null) {
+        const meta = this.scegliMeta(larghezza, L);
+        this.meta = meta.x;
+        this.zMeta = meta.z;
+        this.partenza = { x: this.x, z: this.z };
+      }
       const dx = this.meta - this.x;
       if (Math.abs(dx) < L * 0.1) {
         this.meta = null;
@@ -107,7 +144,11 @@ export class Paguro {
         }
       }
       this.prossimoTrasloco -= dt;
-      if (this.prossimoTrasloco <= 0) this.stato = 'versoConchiglia';
+      if (this.prossimoTrasloco <= 0) {
+        this.stato = 'versoConchiglia';
+        this.meta = null;
+        this.zMeta = null;
+      }
     } else if (this.stato === 'sosta') {
       this.attesa -= dt;
       if (this.attesa <= 0) this.stato = 'cammina';
@@ -117,13 +158,32 @@ export class Paguro {
       this.attesa -= dt;
       if (this.attesa <= 0) this.stato = 'cammina';
     } else if (this.stato === 'versoConchiglia') {
-      // Va accanto alla conchiglia vuota (alla sua stessa profondità).
-      const meta = this.vuota.x * larghezza - L * 0.55;
-      const dx = meta - this.x;
-      if (Math.abs(dx) < L * 0.08 && Math.abs(this.z - this.z0Vuota) < 0.01) {
-        this.verso = 1; // guarda la conchiglia
-        this.stato = 'esce';
-      } else if (Math.abs(dx) >= L * 0.08) {
+      // Va accanto alla conchiglia vuota, alla sua stessa profondità. Se è già
+      // vicino ma a un'altra profondità, prima si allontana di qualche passo
+      // (la profondità cambia solo camminando).
+      const accanto = this.vuota.x * larghezza - L * 0.7;
+      if (this.zMeta !== this.z0Vuota || this.meta === null) {
+        const lontano = Math.abs(accanto - this.x) < L * 1.5 && Math.abs(this.z - this.z0Vuota) > 0.02;
+        this.meta = lontano ? accanto - L * 3 : accanto;
+        this.zMeta = lontano ? this.z : this.z0Vuota;
+        this.partenza = { x: this.x, z: this.z };
+        if (!lontano) this.zMeta = this.z0Vuota;
+      }
+      const dx = this.meta - this.x;
+      if (Math.abs(dx) < L * 0.08) {
+        if (this.meta === accanto) {
+          this.z = this.z0Vuota;
+          this.verso = 1; // guarda la conchiglia
+          this.stato = 'esce';
+          this.meta = null;
+          this.partenza = null;
+        } else {
+          // Si è allontanato: ora torna verso la conchiglia cambiando profondità.
+          this.meta = accanto;
+          this.zMeta = this.z0Vuota;
+          this.partenza = { x: this.x, z: this.z };
+        }
+      } else {
         this.verso = Math.sign(dx);
         velocita = 0.22;
       }
@@ -135,7 +195,7 @@ export class Paguro {
         const vecchia = this.conchiglia;
         this.conchiglia = this.vuota.conchiglia;
         this.vuota = { x: this.x / larghezza, conchiglia: vecchia };
-        this.x += L * 0.55;
+        this.x += L * 0.7;
         this.zampe = new Zampe(N_ZAMPE, { passo: 0.11, durata: 0.22, alzata: 0.06 });
         this.stato = 'entra';
       }
@@ -155,11 +215,13 @@ export class Paguro {
     }
     this.x = Math.min(larghezza * 0.95, Math.max(larghezza * 0.05, this.x));
 
-    // Profondità: davanti agli ostacoli, oppure alla profondità della conchiglia
-    // vuota quando va a prenderla.
-    const verso = this.stato === 'versoConchiglia' || this.stato === 'esce' || this.stato === 'entra';
-    const zVoluta = verso ? this.z0Vuota : this.zSicura(this.x, L);
-    this.z += Math.sign(zVoluta - this.z) * Math.min(Math.abs(zVoluta - this.z), dt * 0.08);
+    // Profondità: cambia insieme al cammino, in proporzione a quanta strada
+    // ha fatto verso la meta (così va in diagonale e non scivola mai).
+    if (velocita > 0 && this.partenza && this.meta !== null) {
+      const tratto = this.meta - this.partenza.x;
+      const fatto = Math.abs(tratto) > 1 ? Math.min(1, Math.max(0, (this.x - this.partenza.x) / tratto)) : 1;
+      this.z = this.partenza.z + (this.zMeta - this.partenza.z) * fatto;
+    }
     this.y = this.suolo(this.x, larghezza, altezza);
 
     this.zampe.aggiorna(dt, this.riposoZampe(L), (x) => this.suolo(x, larghezza, altezza), L);

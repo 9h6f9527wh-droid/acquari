@@ -24,11 +24,25 @@ export class Abitanti {
   disegna(ctx, larghezza, altezza) {
     const p = this.paguro;
     const L = p.lunghezza(larghezza, altezza);
-    // La conchiglia vuota sulla sabbia, poi il paguro.
+    // La conchiglia vuota e il paguro, dal più lontano al più vicino.
+    const zVuota = p.z0Vuota || 0.92;
     const xVuota = p.vuota.x * larghezza;
-    const yVuota = this.fondale.profondita(p.vuota.x, p.z0Vuota || 0.92) * altezza;
-    disegnaConchiglia(ctx, xVuota, yVuota, L, -1, CONCHIGLIE[p.vuota.conchiglia], p.z0Vuota || 0.92, true);
-    if (p.x !== null) disegnaPaguro(ctx, p, L, CONCHIGLIE[p.conchiglia]);
+    const yVuota = this.fondale.profondita(p.vuota.x, zVuota) * altezza;
+    const Lv = 0.06 * this.fondale.misuraBase(larghezza, altezza) * this.fondale.scalaZ(zVuota);
+    const vuota = () => disegnaConchiglia(ctx, xVuota, yVuota, Lv, -1, CONCHIGLIE[p.vuota.conchiglia], zVuota, true);
+    const paguro = () => {
+      if (p.x === null) return;
+      disegnaPaguro(ctx, p, L, CONCHIGLIE[p.conchiglia]);
+      // Se è passato dietro un corallo o una roccia, l'oggetto lo copre.
+      this.fondale.ridisegnaDavanti(ctx, p.z, p.x - L * 0.9, p.y - L * 1.1, p.x + L * 0.9, p.y + L * 0.2);
+    };
+    if (p.z < zVuota) {
+      paguro();
+      vuota();
+    } else {
+      vuota();
+      paguro();
+    }
     const g = this.gambero;
     if (g.pronto) disegnaGambero(ctx, g, g.lunghezza(larghezza, altezza));
   }

@@ -33,7 +33,7 @@ export class Zampe {
         if (p.volo >= 1) p.volo = null;
         return;
       }
-      p.y = suolo(p.x);
+      // Piede appoggiato: resta dov'è (anche in altezza) finché non fa un passo.
       const lontano = Math.abs(p.x - meta) > passo;
       const vicini = [this.piedi[i - 1], this.piedi[i + 1]].some((q) => q && q.volo !== null);
       if (lontano && !vicini && inAria < Math.ceil(this.piedi.length / 2)) {

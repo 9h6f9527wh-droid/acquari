@@ -61,12 +61,35 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 - *Scelto:* una **coppia di pesci pagliaccio** (vivono in coppia e abitano gli anemoni: la loro casa è l'anemone arancione).
 
 ### ⬜ Fase 4 — Più specie e i banchi
-- 3 specie diverse (es. neon, guppy, scalare) con forme, colori e velocità proprie.
-- Alcune specie nuotano **in banco**: restano vicine e si muovono insieme.
+- Due specie nuove: **pesce chirurgo blu** e **castagnole** (piccoli pesci verde-azzurri), con forme, colori e velocità proprie.
+- Nuotano **in banco**: restano vicine e si muovono insieme.
 - 🎯 *Cosa provi:* controlliamo che resti fluido con 30-40 pesci.
 
 ### ⬜ Fase 4b — Il banco lontano *(aggiunta su richiesta)*
 - Ogni tanto un banco di pesci passa in lontananza, come sagome velate nella foschia.
+
+> **Il cast della vasca** *(scelto insieme il 2026-10-19)*: non solo pesci, ma animali diversi, ognuno con un suo modo di muoversi e un suo ruolo.
+> Scartati per non affollare: granchio (lo sostituisce il paguro), aragosta, pesce mandarino, murena.
+> Idea per più avanti: gambero pistolero e ghiozzo, che vivono in coppia in una tana nella sabbia.
+
+### ⬜ Fase 4c — Gli abitanti del fondo *(aggiunta su richiesta)*
+- 🦐 **Gambero pulitore**: rosso e bianco, antenne lunghe; i pesci si fermano da lui per farsi "pulire".
+- 🐚 **Paguro**: cammina sulla sabbia con la sua conchiglia e ogni tanto la cambia con una più grande.
+
+### ⬜ Fase 4d — Il polpo 🐙 *(aggiunta su richiesta)*
+- Vive nella **grotta** dello scoglio; esce strisciando sui tentacoli o nuotando a getto.
+- **Cambia colore** per mimetizzarsi; se si spaventa (tocco sullo schermo) lancia una **nuvola d'inchiostro** e scappa.
+
+### ⬜ Fase 4e — Seppia e cavalluccio *(aggiunta su richiesta)*
+- 🦑 **Seppia fiammeggiante**: sospesa nell'acqua, con la pinna che ondeggia tutta intorno al corpo e onde di colore sulla pelle.
+- 🐴 **Cavalluccio marino**: nuota in verticale e si aggrappa alle piante con la coda.
+
+### ⬜ Fase 4f — Anguille giardino e nudibranco *(aggiunta su richiesta)*
+- 🪱 **Anguille giardino**: una colonia che spunta dalla sabbia e ondeggia; se tocchi vicino, rientrano tutte nella sabbia.
+- 🐌 **Nudibranco**: minuscola lumaca di mare coloratissima che striscia sulle rocce.
+
+### ⬜ Fase 4g — Il pesce palla 🐡 *(aggiunta su richiesta)*
+- Nuota goffo e, se lo tocchi o si spaventa, **si gonfia** come un pallone e poi si sgonfia piano.
 
 ---
 
@@ -82,6 +105,10 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 ### ⬜ Fase 5b — Giorno e notte *(aggiunta su richiesta)*
 - La luce segue l'orologio del gioco: alba, giorno, tramonto e notte.
 - Di notte l'acqua diventa blu scuro e brillano di più le lucine della grotta e le punte degli anemoni.
+
+### ⬜ Fase 5c — La medusa 🪼 *(aggiunta su richiesta)*
+- Il corpo pulsa e i tentacoli fluttuano dietro; si lascia portare dalla corrente.
+- **Di notte si illumina di blu fluo.**
 
 ### ⬜ Fase 6 — Fame e cibo
 - Tocchi la vasca e cadono scaglie di cibo; i pesci le vedono e le inseguono.
@@ -109,6 +136,8 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 ### ⬜ Fase 12 — Predatori e carattere
 - Specie **aggressive** che inseguono gli altri, e **predatori** che mangiano i pesci più piccoli.
 - Ogni specie ha un carattere: pacifica, territoriale, predatrice.
+- 🦁 **Pesce scorpione**: il predatore elegante, con le pinne a piuma. Attenzione a chi metti insieme a lui!
+- I ruoli nell'ecosistema: **spazzini** (gambero, paguro) mangiano il cibo avanzato e puliscono l'acqua; **erbivori** (chirurgo) mangiano le alghe; **predatori** (pesce scorpione, polpo) mangiano gli animali più piccoli.
 
 ---
 
@@ -144,6 +173,7 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 ### ⬜ Fase 20 — Sblocchi e progressione
 - Vasche più grandi da comprare (più spazio, più pesci, più visitatori).
 - **Specie rare** che si sbloccano raggiungendo traguardi (es. soldi, soddisfazione, numero di specie).
+- Premi per le vasche grandi: 🐢 **tartaruga marina** e 🫓 **razza** (plana sul fondo e si seppellisce nella sabbia).
 
 ---
 
@@ -173,3 +203,4 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 | 2 | 2026-10-19 | **Profondità e livelli**: ogni roccia, corallo e pianta ha una profondità `z` (sabbia più ampia, oggetti lontani più in alto, piccoli e velati; vicini più in basso, grandi e nitidi), dipinti dal più lontano al più vicino su tre strati (dietro lo scoglio, scoglio, davanti). Sabbia ammucchiata alla base di ogni oggetto e foschia sul bordo lontano della sabbia, così tutto poggia davvero sul fondo. Il passaggio dello scoglio ora è un tunnel buio con un filo di luce in fondo, invece di mostrare l'acqua azzurra. |
 | 2b | 2026-10-19 | Nuovo `js/disegno/caustiche.js`: **rete di luce ondulata** sulla sabbia, due strati che scorrono in direzioni diverse (tessere preparate una volta sola, già schiacciate in prospettiva). **Relitto** di nave sullo sfondo tra le colline: sagoma scura velata dalla foschia, con contorni sfumati, alberi spezzati, sartie e oblò. Pochi dettagli: una **stella marina** sul fianco dello scoglio e tre **conchiglie** sulla sabbia. In attesa di prova sull'iPad. |
 | 3 | 2026-10-19 | Nuova cartella `js/pesci/`: `specie.js` (scheda del pesce pagliaccio: forma, colori, bande, modo di nuotare), `pesce.js` (il "cervello": vaga, va all'anemone, entra nella grotta a riposare, attraversa il tunnel; scatti e planate, girate su se stesso, inclinazione limitata, profondità z, non attraversa la roccia ma ci gira intorno), `pesci.js` (crea la coppia e la disegna nello strato giusto: dietro, nella tana o davanti). `js/disegno/pesce.js`: corpo che ondeggia, bande bianche bordate di nero, pinne trasparenti con raggi, coda a ventaglio, occhio con riflesso, ombra sulla sabbia; nella grotta si scurisce. `js/util/colore.js`: velo d'acqua condiviso con le piante. Provato con una simulazione di 60 secondi: entrano ed escono da grotta e tunnel senza bloccarsi. In attesa di prova sull'iPad. |
+| — | 2026-10-19 | Scelto insieme il **cast della vasca**: nuove fasi 4c (gambero pulitore, paguro), 4d (polpo), 4e (seppia fiammeggiante, cavalluccio), 4f (anguille giardino, nudibranco), 4g (pesce palla), 5c (medusa che di notte diventa blu fluo); pesce scorpione con i predatori (Fase 12); tartaruga e razza come premi (Fase 20). |

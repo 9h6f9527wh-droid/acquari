@@ -141,6 +141,14 @@ export class Scoglio {
     this.dipingiFronte(prepara(this.fronte), M);
   }
 
+  // Vero se il punto (x, y) sta sopra la sagoma dello scoglio (con un margine).
+  // Serve ai pesci: mentre sono "sopra" la roccia non cambiano lato (davanti/dietro).
+  copre(x, y, margine = 0) {
+    if (!this.cima) return false;
+    const u = (x - this.cx) / (this.rx + margine);
+    return Math.abs(u) < 1 && y > this.cima(Math.max(-1, Math.min(1, u))) - margine;
+  }
+
   // Coordinate relative → punti: u da -1 a 1 in larghezza, v da 0 (base) a 1 (cima).
   punto(u, v) {
     return { x: this.cx + u * this.rx, y: this.base - (this.base - this.cima(u)) * v };

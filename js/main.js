@@ -8,6 +8,7 @@ import { Particelle } from './disegno/particelle.js';
 import { Fondale } from './disegno/fondale.js';
 import { Piante } from './disegno/piante.js';
 import { Caustiche } from './disegno/caustiche.js';
+import { Pesci } from './pesci/pesci.js';
 
 const canvas = document.getElementById('vasca');
 const ctx = canvas.getContext('2d');
@@ -27,6 +28,7 @@ const bolle = new Bolle();
 const fondale = new Fondale();
 const piante = new Piante(fondale);
 const caustiche = new Caustiche(fondale);
+const pesci = new Pesci(fondale);
 
 function adattaAlloSchermo() {
   const densita = Math.min(window.devicePixelRatio || 1, MAX_DENSITA);
@@ -47,6 +49,7 @@ function aggiorna(dt) {
   piante.aggiorna(dt);
   caustiche.aggiorna(dt);
   bolle.aggiorna(dt, larghezza, altezza, fondale);
+  pesci.aggiorna(dt, larghezza, altezza);
 }
 
 // L'ordine conta: ciò che è disegnato dopo appare davanti.
@@ -60,14 +63,17 @@ function disegna() {
   // La rete di luce sulla sabbia (gli oggetti davanti la coprono, come le ombre).
   caustiche.disegna(ctx, larghezza, altezza);
   piante.disegnaDietro(ctx, larghezza, altezza);
-  // Scoglio centrale in due fogli: i pesci dentro la tana (dalla Fase 3)
-  // verranno disegnati in mezzo, così la roccia davanti li copre.
+  pesci.disegna(ctx, 'dietro', larghezza, altezza);
+  // Scoglio centrale in due fogli: i pesci dentro la tana sono disegnati
+  // in mezzo, così la roccia davanti li copre.
   fondale.scoglio.disegnaRetro(ctx);
+  pesci.disegna(ctx, 'tana', larghezza, altezza);
   fondale.scoglio.disegnaFronte(ctx);
   piante.disegnaSulloScoglio(ctx, larghezza, altezza);
   // Oggetti e piante davanti allo scoglio, verso di noi.
   fondale.disegnaPrimoPiano(ctx, larghezza, altezza);
   piante.disegnaDavanti(ctx, larghezza, altezza);
+  pesci.disegna(ctx, 'davanti', larghezza, altezza);
   luce.disegna(ctx, larghezza, altezza);
   particelle.disegna(ctx, larghezza, altezza);
   bolle.disegna(ctx);

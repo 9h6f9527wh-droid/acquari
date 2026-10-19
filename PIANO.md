@@ -49,15 +49,16 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 - *Aggiunto su richiesta:* fondale da barriera corallina con coralli, anemoni e alghe marine.
 - *Aggiunto su richiesta:* grande scoglio-casa al centro, con una grotta e un passaggio in cui i pesci potranno entrare (il comportamento arriverà con i pesci).
 
-### 🟡 Fase 2b — Rifiniture dell'ambiente *(aggiunta su richiesta)*
+### ✅ Fase 2b — Rifiniture dell'ambiente *(aggiunta su richiesta)*
 - **Caustiche**: i riflessi di luce a rete che ondeggiano sulla sabbia.
 - **Grande relitto** sullo sfondo: solo una sagoma scura nella foschia, "vedo e non vedo".
 - Pochi dettagli sul fondo, senza esagerare: una stella marina e qualche conchiglia.
 
-### ⬜ Fase 3 — Il primo pesce
+### 🟡 Fase 3 — Il primo pesce
 - *Da preparare qui:* il pesce sa dov'è la tana nello scoglio (`scoglio.tana`) e ogni tanto ci entra o ci passa attraverso.
 - Un pesce semi-realistico: corpo sfumato, coda e pinne che si muovono a ritmo del nuoto.
 - Movimento naturale: sceglie dove andare, accelera, rallenta, gira con una curva morbida, evita i bordi.
+- *Scelto:* una **coppia di pesci pagliaccio** (vivono in coppia e abitano gli anemoni: la loro casa è l'anemone arancione).
 
 ### ⬜ Fase 4 — Più specie e i banchi
 - 3 specie diverse (es. neon, guppy, scalare) con forme, colori e velocità proprie.
@@ -171,3 +172,4 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 | 2 | 2026-10-19 | Entrate dello scoglio **più naturali**: forme irregolari invece di ovali perfetti, niente contorno scuro netto (la roccia si scurisce piano verso l'apertura), sabbia che continua dentro la grotta sfumando nel buio, parete interna del passaggio che sfuma nell'acqua dietro, ciuffi di alghe e muschio che pendono dal bordo della grotta. |
 | 2 | 2026-10-19 | **Profondità e livelli**: ogni roccia, corallo e pianta ha una profondità `z` (sabbia più ampia, oggetti lontani più in alto, piccoli e velati; vicini più in basso, grandi e nitidi), dipinti dal più lontano al più vicino su tre strati (dietro lo scoglio, scoglio, davanti). Sabbia ammucchiata alla base di ogni oggetto e foschia sul bordo lontano della sabbia, così tutto poggia davvero sul fondo. Il passaggio dello scoglio ora è un tunnel buio con un filo di luce in fondo, invece di mostrare l'acqua azzurra. |
 | 2b | 2026-10-19 | Nuovo `js/disegno/caustiche.js`: **rete di luce ondulata** sulla sabbia, due strati che scorrono in direzioni diverse (tessere preparate una volta sola, già schiacciate in prospettiva). **Relitto** di nave sullo sfondo tra le colline: sagoma scura velata dalla foschia, con contorni sfumati, alberi spezzati, sartie e oblò. Pochi dettagli: una **stella marina** sul fianco dello scoglio e tre **conchiglie** sulla sabbia. In attesa di prova sull'iPad. |
+| 3 | 2026-10-19 | Nuova cartella `js/pesci/`: `specie.js` (scheda del pesce pagliaccio: forma, colori, bande, modo di nuotare), `pesce.js` (il "cervello": vaga, va all'anemone, entra nella grotta a riposare, attraversa il tunnel; scatti e planate, girate su se stesso, inclinazione limitata, profondità z, non attraversa la roccia ma ci gira intorno), `pesci.js` (crea la coppia e la disegna nello strato giusto: dietro, nella tana o davanti). `js/disegno/pesce.js`: corpo che ondeggia, bande bianche bordate di nero, pinne trasparenti con raggi, coda a ventaglio, occhio con riflesso, ombra sulla sabbia; nella grotta si scurisce. `js/util/colore.js`: velo d'acqua condiviso con le piante. Provato con una simulazione di 60 secondi: entrano ed escono da grotta e tunnel senza bloccarsi. In attesa di prova sull'iPad. |

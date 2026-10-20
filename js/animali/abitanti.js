@@ -8,23 +8,29 @@
 import { Gambero } from './gambero.js';
 import { Paguro, CONCHIGLIE } from './paguro.js';
 import { Polpo } from './polpo.js';
+import { Cavallucci } from './cavallucci.js';
+import { Seppia } from './seppia.js';
 import { disegnaGambero, disegnaPaguro, disegnaConchiglia } from '../disegno/invertebrati.js';
 import { disegnaPolpo } from '../disegno/polpo.js';
+import { disegnaCavalluccio } from '../disegno/cavalluccio.js';
+import { disegnaSeppia } from '../disegno/seppia.js';
 
 // Due animali a meno di questa differenza di profondità si scontrano.
 const SPESSORE_ANIMALI = 0.1;
 
 export class Abitanti {
-  constructor(fondale) {
+  constructor(fondale, piante) {
     this.fondale = fondale;
+    this.cavallucci = new Cavallucci(fondale, piante);
+    this.seppia = new Seppia(fondale);
     this.gambero = new Gambero(fondale);
     this.paguro = new Paguro(fondale);
     this.polpo = new Polpo(fondale);
   }
 
-  // Un tocco sullo schermo: per ora solo il polpo reagisce (si spaventa).
+  // Un tocco sullo schermo: il polpo e la seppia si spaventano.
   tocco(x, y, larghezza, altezza) {
-    return this.polpo.tocco(x, y, larghezza, altezza);
+    return this.polpo.tocco(x, y, larghezza, altezza) || this.seppia.tocco(x, y, larghezza, altezza);
   }
 
   // Il polpo dentro la grotta (va disegnato tra i due fogli dello scoglio).
@@ -50,6 +56,8 @@ export class Abitanti {
     if (o.x !== null && !o.dentroTana && o.posa === 'terra') {
       elenco.push({ chi: o, x: o.x, z: o.z, mezzo: o.lunghezza(larghezza, altezza) * 0.7 });
     }
+    const s = this.seppia;
+    if (s.x !== null && s.aTerra > 0.5) elenco.push({ chi: s, x: s.x, z: s.z, mezzo: s.lunghezza(larghezza, altezza) * 0.45 });
     const g = this.gambero;
     if (g.pronto && !g.inCima()) elenco.push({ chi: g, x: g.x, z: g.z, mezzo: g.lunghezza(larghezza, altezza) * 0.45 });
     return elenco;
@@ -74,6 +82,9 @@ export class Abitanti {
     this.paguro.aggiorna(dt, larghezza, altezza);
     elenco = this.aTerra(larghezza, altezza);
     this.polpo.aggiorna(dt, larghezza, altezza);
+    elenco = this.aTerra(larghezza, altezza);
+    this.seppia.aggiorna(dt, larghezza, altezza);
+    this.cavallucci.aggiorna(dt, larghezza, altezza);
   }
 
   disegna(ctx, larghezza, altezza) {
@@ -124,6 +135,29 @@ export class Abitanti {
           disegnaGambero(ctx, g, Lg);
           // Quando è sceso sulla sabbia, gli oggetti davanti a lui lo coprono.
           if (!g.inCima()) this.fondale.ridisegnaDavanti(ctx, g.z, g.x - Lg, g.y - Lg, g.x + Lg, g.y + Lg * 0.2);
+        },
+      });
+    }
+    // I cavallucci (in acqua, ma coperti dagli oggetti che hanno davanti).
+    for (const c of this.cavallucci.coppia) {
+      if (c.x === null) continue;
+      disegni.push({
+        z: c.z,
+        fai: () => {
+          const Lc = this.cavallucci.lunghezza(c, larghezza, altezza);
+          disegnaCavalluccio(ctx, c, Lc);
+          this.fondale.ridisegnaDavanti(ctx, c.z, c.x - Lc * 0.5, c.y - Lc, c.x + Lc * 0.5, c.y + Lc * 0.4);
+        },
+      });
+    }
+    const s = this.seppia;
+    if (s.x !== null) {
+      disegni.push({
+        z: s.z,
+        fai: () => {
+          const Ls = s.lunghezza(larghezza, altezza);
+          disegnaSeppia(ctx, s, Ls);
+          this.fondale.ridisegnaDavanti(ctx, s.z, s.x - Ls * 0.7, s.y - Ls * 0.5, s.x + Ls * 0.7, s.y + Ls * (0.3 + s.alto));
         },
       });
     }

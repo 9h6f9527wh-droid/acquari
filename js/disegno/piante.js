@@ -362,28 +362,53 @@ export class Piante {
 
   // ---------- Strati ----------
 
+  // Dove nasce una pianta (in punti) e quanto è grande.
+  base(p, larghezza, altezza) {
+    const fondale = this.fondale;
+    let x;
+    let y;
+    if (p.scoglio) {
+      x = fondale.scoglio.appoggio.x;
+      y = fondale.scoglio.appoggio.y;
+    } else if (p.roccia !== undefined) {
+      const cima = fondale.cimeRocce[p.roccia];
+      x = cima.x;
+      y = cima.y;
+    } else if (p.lontana) {
+      x = p.x * larghezza;
+      y = fondale.lineaLontana(p.x) * altezza + 4;
+    } else {
+      x = p.x * larghezza;
+      y = fondale.profondita(p.x, p.z) * altezza + 3;
+    }
+    // Le misure sono in frazioni dell'altezza; più è vicina, più è grande.
+    const scalaZ = p.lontana ? 1 : fondale.scalaZ(p.z);
+    return { x, y, scalaZ, scala: altezza * scalaZ };
+  }
+
+  // Le piante a ciuffo a cui un animale si può aggrappare (i cavallucci).
+  appigli() {
+    return this.vicine.filter((p) => p.foglie && p.z > Z_SCOGLIO);
+  }
+
+  // Il punto di una foglia a una certa altezza (s da 0 alla base a 1 in punta),
+  // dove si trova in questo istante (le foglie ondeggiano).
+  puntoFoglia(p, indice, s, larghezza, altezza) {
+    const { x, y, scala } = this.base(p, larghezza, altezza);
+    const f = this.conScala(p.foglie[indice], scala);
+    const segmenti = 9;
+    const punti = spina(x, y, f, this.tempo, segmenti);
+    const k = Math.min(segmenti - 1, Math.floor(s * segmenti));
+    const q = s * segmenti - k;
+    const a = punti[k];
+    const b = punti[k + 1];
+    return { x: a.x + (b.x - a.x) * q, y: a.y + (b.y - a.y) * q, angolo: a.angolo + (b.angolo - a.angolo) * q };
+  }
+
   disegnaStrato(ctx, piante, larghezza, altezza) {
     const fondale = this.fondale;
     for (const p of piante) {
-      let x;
-      let y;
-      if (p.scoglio) {
-        x = fondale.scoglio.appoggio.x;
-        y = fondale.scoglio.appoggio.y;
-      } else if (p.roccia !== undefined) {
-        const cima = fondale.cimeRocce[p.roccia];
-        x = cima.x;
-        y = cima.y;
-      } else if (p.lontana) {
-        x = p.x * larghezza;
-        y = fondale.lineaLontana(p.x) * altezza + 4;
-      } else {
-        x = p.x * larghezza;
-        y = fondale.profondita(p.x, p.z) * altezza + 3;
-      }
-      // Le misure sono in frazioni dell'altezza; più è vicina, più è grande.
-      const scalaZ = p.lontana ? 1 : fondale.scalaZ(p.z);
-      const scala = altezza * scalaZ;
+      const { x, y, scalaZ, scala } = this.base(p, larghezza, altezza);
 
       if (!p.lontana && (p.tipo === 'nastro' || p.tipo === 'spada')) {
         // Ciuffi: scuri alla base e chiari in punta.

@@ -32,7 +32,7 @@ const piante = new Piante(fondale);
 const caustiche = new Caustiche(fondale);
 const pesci = new Pesci(fondale);
 const lontananza = new Lontananza(fondale);
-const abitanti = new Abitanti(fondale);
+const abitanti = new Abitanti(fondale, piante);
 
 // Accesso per le prove: permette di controllare la vasca dall'esterno
 // (non cambia nulla nel gioco).

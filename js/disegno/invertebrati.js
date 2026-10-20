@@ -155,9 +155,11 @@ export function disegnaGambero(ctx, g, L) {
 
   // Chele piccole davanti (quelle che puliscono): quando lavora si allungano
   // in su verso il pesce e si muovono svelte.
-  const lavoro = 0.3 + alzata * 0.7;
+  // Quando fruga sulla sabbia le chele si muovono svelte verso il basso.
+  const fruga = g.stato === 'fruga' ? 1 : 0;
+  const lavoro = 0.3 + alzata * 0.7 + fruga * 0.5;
   for (const k of [0, 1]) {
-    const mossa = Math.sin(t * (alzata > 0.5 ? 10 : 2) + k * 2) * L * 0.04 * lavoro;
+    const mossa = Math.sin(t * (alzata > 0.5 || fruga ? 10 : 2) + k * 2) * L * 0.04 * lavoro + fruga * L * 0.05;
     const su = alzata * L * 0.14;
     zampa(ctx, testa.x, testa.y + L * 0.04, testa.x + L * 0.1, testa.y - L * 0.02 - su * 0.5 + mossa, testa.x + L * 0.2, testa.y - L * 0.06 - su + mossa, Math.max(0.8, L * 0.016), biancoTrasp);
   }

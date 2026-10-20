@@ -66,7 +66,12 @@ export class Abitanti {
       this.fondale.ridisegnaDavanti(ctx, o.z, o.x - Lo, o.y - Lo, o.x + Lo, o.y + Lo * 0.3);
     }
     const g = this.gambero;
-    if (g.pronto) disegnaGambero(ctx, g, g.lunghezza(larghezza, altezza));
+    if (g.pronto) {
+      const Lg = g.lunghezza(larghezza, altezza);
+      disegnaGambero(ctx, g, Lg);
+      // Quando è sceso sulla sabbia, gli oggetti davanti a lui lo coprono.
+      if (!g.inCima()) this.fondale.ridisegnaDavanti(ctx, g.z, g.x - Lg, g.y - Lg, g.x + Lg, g.y + Lg * 0.2);
+    }
     // La nuvola d'inchiostro sta davanti a tutto.
     o.inchiostro.disegna(ctx);
   }

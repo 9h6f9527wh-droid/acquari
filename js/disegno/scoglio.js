@@ -245,6 +245,9 @@ export class Scoglio {
     ctx.fill();
     ctx.restore();
 
+    // Dettagli dell'interno (pareti a strati, luce sul pavimento, sassi...).
+    this.dipingiInterno(ctx);
+
     // Qualche lucina nel buio, come piccole creature luminose.
     ctx.globalCompositeOperation = 'lighter';
     for (const p of this.lucine) {
@@ -282,6 +285,152 @@ export class Scoglio {
     ctx.fillStyle = fondo;
     this.tracciaPassaggio(ctx, 1.15);
     ctx.fill();
+  }
+
+  // L'interno della grotta: una tana accogliente, non solo un buco nero.
+  //  - pareti a strati vicino all'ingresso, che si perdono nel buio;
+  //  - un ripiano di roccia sulla parete destra;
+  //  - una pozza di luce sulla sabbia, dove entra la luce da fuori;
+  //  - sassolini, una conchiglietta e qualche polipo luminoso sul soffitto.
+  dipingiInterno(ctx) {
+    const g = this.grotta;
+    const caso = creaCasuale(777);
+    const centro = { x: g.x, y: g.y - g.ry * 0.4 };
+    ctx.save();
+    this.tracciaGrotta(ctx, 1.15);
+    ctx.clip();
+
+    // Strati della roccia: anelli che seguono la forma dell'arco, sempre più
+    // piccoli e scuri verso il fondo. Ognuno ha il bordo di sopra un po' chiaro.
+    ctx.lineCap = 'round';
+    for (let k = 0; k < 4; k++) {
+      const scala = 1.08 - k * 0.11;
+      const punti = scalaForma(this.formaGrotta.slice(0, 19), centro, scala);
+      const forza = 0.16 - k * 0.035;
+      // Solo pezzi di strato, qua e là: la roccia non è fatta ad anelli.
+      let i = caso.intero(0, 3);
+      while (i < punti.length - 2) {
+        const lungo = caso.intero(2, 5);
+        const fine = Math.min(punti.length - 1, i + lungo);
+        const larghezza = caso.tra(1.5, 3.5);
+        for (const [colore, w, dy] of [
+          [`rgba(150, 175, 175, ${forza})`, larghezza * 0.7, 0],
+          [`rgba(3, 10, 16, ${forza * 2})`, larghezza, larghezza],
+        ]) {
+          ctx.beginPath();
+          for (let j = i; j <= fine; j++) {
+            const y = punti[j].y + dy + Math.sin(j * 1.7 + k * 2) * 2;
+            if (j === i) ctx.moveTo(punti[j].x, y);
+            else ctx.lineTo(punti[j].x, y);
+          }
+          ctx.strokeStyle = colore;
+          ctx.lineWidth = w;
+          ctx.stroke();
+        }
+        i = fine + caso.intero(2, 4);
+      }
+    }
+
+    // Un ripiano di roccia sulla parete destra, inclinato verso il basso.
+    const rx0 = g.x + g.rx * 0.35;
+    const ry0 = g.y - g.ry * 0.42;
+    ctx.fillStyle = 'hsl(203, 20%, 14%)';
+    ctx.beginPath();
+    ctx.moveTo(rx0, ry0);
+    ctx.quadraticCurveTo(rx0 + g.rx * 0.45, ry0 - g.ry * 0.06, rx0 + g.rx * 0.95, ry0 - g.ry * 0.02);
+    ctx.lineTo(rx0 + g.rx * 0.95, ry0 + g.ry * 0.14);
+    ctx.quadraticCurveTo(rx0 + g.rx * 0.4, ry0 + g.ry * 0.12, rx0 + g.rx * 0.05, ry0 + g.ry * 0.06);
+    ctx.closePath();
+    ctx.fill();
+    // Il bordo del ripiano preso da un filo di luce.
+    ctx.beginPath();
+    ctx.moveTo(rx0, ry0);
+    ctx.quadraticCurveTo(rx0 + g.rx * 0.45, ry0 - g.ry * 0.06, rx0 + g.rx * 0.95, ry0 - g.ry * 0.02);
+    ctx.strokeStyle = 'rgba(140, 175, 170, 0.35)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    // Sopra il ripiano, due sassolini.
+    for (const [u, r] of [[0.3, 0.07], [0.55, 0.05]]) {
+      const sx = rx0 + g.rx * u;
+      const sy = ry0 - g.ry * 0.035 - r * g.rx * 0.5;
+      ctx.fillStyle = 'hsl(200, 12%, 22%)';
+      ctx.beginPath();
+      ctx.ellipse(sx, sy, r * g.rx, r * g.rx * 0.6, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // La luce che entra dall'ingresso fa una pozza chiara sulla sabbia.
+    const pozza = ctx.createRadialGradient(g.x - g.rx * 0.1, g.y + 2, 0, g.x - g.rx * 0.1, g.y + 2, g.rx * 0.9);
+    pozza.addColorStop(0, 'rgba(190, 200, 160, 0.35)');
+    pozza.addColorStop(0.6, 'rgba(150, 170, 140, 0.12)');
+    pozza.addColorStop(1, 'rgba(150, 170, 140, 0)');
+    ctx.fillStyle = pozza;
+    ctx.save();
+    ctx.translate(g.x - g.rx * 0.1, g.y + 2);
+    ctx.scale(1, 0.3);
+    ctx.beginPath();
+    ctx.arc(0, 0, g.rx * 0.9, 0, Math.PI * 2);
+    ctx.translate(-(g.x - g.rx * 0.1), -(g.y + 2));
+    ctx.restore();
+    ctx.fill();
+
+    // Sassolini e pezzetti di corallo sul pavimento: più chiari e grandi vicino
+    // all'ingresso, più piccoli e scuri verso il fondo.
+    for (let i = 0; i < 16; i++) {
+      const fondo = caso.prossimo(); // 0 = ingresso, 1 = fondo
+      const sx = g.x + caso.tra(-0.9, 0.9) * g.rx * (1 - fondo * 0.4);
+      const sy = g.y + 4 - fondo * g.ry * 0.28;
+      const r = g.rx * caso.tra(0.025, 0.06) * (1 - fondo * 0.5);
+      const luce = 34 - fondo * 24;
+      ctx.fillStyle = `hsl(${caso.tra(25, 210)}, ${caso.tra(6, 18)}%, ${luce}%)`;
+      ctx.beginPath();
+      ctx.ellipse(sx, sy, r, r * 0.6, caso.tra(-0.4, 0.4), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = `rgba(230, 240, 220, ${0.12 * (1 - fondo)})`;
+      ctx.beginPath();
+      ctx.ellipse(sx - r * 0.2, sy - r * 0.25, r * 0.5, r * 0.25, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Una conchiglietta rosata vicino all'ingresso, a sinistra.
+    const cx0 = g.x - g.rx * 0.62;
+    const cy0 = g.y + 3;
+    const rc = g.rx * 0.09;
+    ctx.fillStyle = 'hsl(15, 35%, 58%)';
+    ctx.beginPath();
+    ctx.moveTo(cx0 - rc, cy0);
+    ctx.quadraticCurveTo(cx0, cy0 - rc * 1.5, cx0 + rc, cy0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'hsla(15, 30%, 38%, 0.8)';
+    ctx.lineWidth = 0.8;
+    for (let s = -2; s <= 2; s++) {
+      ctx.beginPath();
+      ctx.moveTo(cx0, cy0 + rc * 0.1);
+      ctx.lineTo(cx0 + s * rc * 0.4, cy0 - rc * (0.75 - Math.abs(s) * 0.12));
+      ctx.stroke();
+    }
+
+    // Piccoli polipi sul soffitto, con le punte che brillano appena.
+    const soffitto = scalaForma(this.formaGrotta.slice(4, 15), centro, 0.82);
+    ctx.globalCompositeOperation = 'lighter';
+    soffitto.forEach((q, i) => {
+      if (i % 2) return;
+      for (let n = 0; n < 3; n++) {
+        const px = q.x + caso.tra(-4, 4);
+        const py = q.y + caso.tra(0, 5);
+        const r = caso.tra(1, 1.8);
+        ctx.fillStyle = 'rgba(255, 160, 200, 0.08)';
+        ctx.beginPath();
+        ctx.arc(px, py, r * 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255, 190, 215, 0.45)';
+        ctx.beginPath();
+        ctx.arc(px, py, r * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.restore();
   }
 
   dipingiFronte(ctx, M) {
@@ -403,6 +552,10 @@ export class Scoglio {
     ctx.fill();
     ctx.globalCompositeOperation = 'source-over';
 
+    // 2b. Il bordo dell'ingresso: un labbro di roccia un po' in rilievo, con
+    //     la luce sopra e l'ombra appena dentro. Poi le incrostazioni colorate.
+    this.dipingiBordoGrotta(ctx, M);
+
     // 3. Ciuffi di alghe che pendono dal bordo superiore della grotta:
     //    nascondono in parte il contorno e lo rendono più naturale.
     const caso = creaCasuale(99);
@@ -452,6 +605,22 @@ export class Scoglio {
     // Sabbia ammucchiata ai piedi dello scoglio (copre anche l'ingresso della grotta).
     this.fondale.sabbiaAlPiede(ctx, cx, base - 6, rx * 1.8, this.z);
 
+    // Qualche sasso e pezzo di roccia caduto ai lati dell'ingresso.
+    for (const [u, r0] of [[-1.05, 0.13], [-0.85, 0.08], [0.95, 0.11], [1.15, 0.07], [0.78, 0.05]]) {
+      const sx = g.x + u * g.rx;
+      const r = r0 * g.rx;
+      const sy = g.y + 4 - r * 0.3;
+      const sasso = ctx.createLinearGradient(0, sy - r, 0, sy + r * 0.6);
+      sasso.addColorStop(0, 'hsl(195, 12%, 46%)');
+      sasso.addColorStop(1, 'hsl(205, 20%, 22%)');
+      ctx.fillStyle = sasso;
+      ctx.beginPath();
+      ctx.ellipse(sx, sy, r, r * 0.62, caso.tra(-0.2, 0.2), Math.PI, Math.PI * 2);
+      ctx.quadraticCurveTo(sx + r * 0.9, sy + r * 0.35, sx, sy + r * 0.35);
+      ctx.quadraticCurveTo(sx - r * 0.9, sy + r * 0.35, sx - r, sy);
+      ctx.fill();
+    }
+
     // Decorazioni sullo scoglio: piccoli coralli appoggiati sulla roccia.
     const decora = (tipo, u, misura, colore, affonda = 4) => {
       const x = cx + u * rx;
@@ -465,6 +634,104 @@ export class Scoglio {
     // Coralli alla base, davanti allo scoglio.
     dipingiCorallo(ctx, caso, 'cervello', cx + rx * 0.4, base - 2, M * 0.05, { h: 150, s: 30, l: 46 });
     dipingiCorallo(ctx, caso, 'tubi', cx - rx * 0.86, base - 1, M * 0.08, { h: 28, s: 75, l: 55 });
+  }
+
+  // Il contorno della grotta visto da fuori: un labbro in rilievo e tante
+  // piccole vite attaccate alla roccia (alghe rosa incrostanti, spugne,
+  // polipi), come nelle vere rocce di barriera.
+  dipingiBordoGrotta(ctx, M) {
+    const g = this.grotta;
+    const caso = creaCasuale(555);
+    const arco = this.formaGrotta.slice(0, 19);
+    const centro = { x: g.x, y: g.y - g.ry * 0.4 };
+    const fuori = scalaForma(arco, centro, 1.1);
+
+    ctx.save();
+    this.tracciaSagoma(ctx);
+    ctx.clip();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    // Labbro: una fascia chiara appena fuori dal bordo e una scura sul bordo.
+    for (const [punti, colore, larghezza] of [
+      [fuori, 'rgba(190, 215, 205, 0.18)', g.rx * 0.16],
+      [scalaForma(arco, centro, 1.04), 'rgba(4, 12, 18, 0.5)', g.rx * 0.08],
+    ]) {
+      ctx.beginPath();
+      punti.forEach((q, i) => (i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)));
+      ctx.strokeStyle = colore;
+      ctx.lineWidth = larghezza;
+      ctx.stroke();
+    }
+
+    // Alghe rosa incrostanti (corallina): macchie irregolari intorno all'arco.
+    for (let i = 1; i < fuori.length - 1; i++) {
+      if (caso.prossimo() < 0.5) continue;
+      const q = fuori[i];
+      const r = g.rx * caso.tra(0.07, 0.15);
+      const tinta = caso.tra(330, 355);
+      for (let n = 0; n < 4; n++) {
+        ctx.fillStyle = `hsla(${tinta}, ${caso.tra(18, 30)}%, ${caso.tra(50, 60)}%, 0.38)`;
+        ctx.beginPath();
+        ctx.ellipse(q.x + caso.tra(-r, r) * 0.6, q.y + caso.tra(-r, r) * 0.6, r * caso.tra(0.4, 0.8), r * caso.tra(0.25, 0.5), caso.tra(0, 3), 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // Puntini chiari: la superficie ruvida della corallina.
+      ctx.fillStyle = 'rgba(255, 225, 235, 0.22)';
+      for (let n = 0; n < 4; n++) {
+        ctx.beginPath();
+        ctx.arc(q.x + caso.tra(-r, r) * 0.6, q.y + caso.tra(-r, r) * 0.4, 0.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Spugne arancioni a sinistra dell'ingresso: piccoli cuscinetti tondi con
+    // il buchino scuro in cima.
+    const spugne = [[-1.02, -0.12, 0.14], [-1.12, -0.26, 0.11], [-0.98, -0.36, 0.08], [-1.2, -0.08, 0.09]];
+    for (const [u, v, r0] of spugne) {
+      const sx = g.x + u * g.rx;
+      const sy = g.y + v * g.ry;
+      const r = r0 * g.rx;
+      const corpo = ctx.createRadialGradient(sx - r * 0.3, sy - r * 0.4, 0, sx, sy, r * 1.1);
+      corpo.addColorStop(0, 'hsl(36, 85%, 62%)');
+      corpo.addColorStop(1, 'hsl(22, 70%, 38%)');
+      ctx.fillStyle = corpo;
+      ctx.beginPath();
+      ctx.ellipse(sx, sy, r, r * 0.8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'hsl(18, 60%, 18%)';
+      ctx.beginPath();
+      ctx.ellipse(sx, sy - r * 0.25, r * 0.28, r * 0.16, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Polipi verdi (zoantidi) a destra dell'ingresso: dischetti con il centro
+    // chiaro e una coroncina di tentacoli.
+    for (let i = 0; i < 9; i++) {
+      const sx = g.x + g.rx * caso.tra(1.0, 1.45) + (g.y - g.ry * 0.1) * 0;
+      const sy = g.y - g.ry * caso.tra(0.05, 0.55);
+      const r = g.rx * caso.tra(0.04, 0.06);
+      ctx.fillStyle = 'hsla(160, 45%, 40%, 0.9)';
+      ctx.beginPath();
+      for (let t = 0; t < 10; t++) {
+        const a = (t / 10) * Math.PI * 2;
+        const rr = t % 2 ? r : r * 1.35;
+        ctx.lineTo(sx + Math.cos(a) * rr, sy + Math.sin(a) * rr * 0.7);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = 'hsl(75, 70%, 62%)';
+      ctx.beginPath();
+      ctx.ellipse(sx, sy, r * 0.45, r * 0.32, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // Le incrostazioni non devono coprire l'apertura: ripuliamo il buco.
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = '#000';
+    this.tracciaGrotta(ctx);
+    ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
   }
 
   disegnaRetro(ctx) {

@@ -35,7 +35,9 @@ export class Zampe {
         return;
       }
       // Piede appoggiato: resta dov'è (anche in altezza) finché non fa un passo.
-      const lontano = Math.abs(p.x - meta) > passo;
+      // Fa un passo anche se il terreno sotto di lui non è più alla sua altezza
+      // (per esempio perché il corpo è andato più avanti o più indietro).
+      const lontano = Math.abs(p.x - meta) > passo || Math.abs(p.y - suolo(p.x, i)) > passo * 0.5;
       const vicini = [this.piedi[i - 1], this.piedi[i + 1]].some((q) => q && q.volo !== null);
       if (lontano && !vicini && inAria < Math.ceil(this.piedi.length / 2)) {
         // Si stacca e si riappoggia un po' oltre il punto di riposo, nella

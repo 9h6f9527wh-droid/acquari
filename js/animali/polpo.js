@@ -123,7 +123,9 @@ export class Polpo {
 
   // Se nel punto (x, z) finirebbe dentro un oggetto, il centro dell'oggetto; se no null.
   // Contano anche gli altri animali sulla sabbia (paguro, conchiglia, gambero).
+  // L è la misura di adesso: a un'altra profondità sarà più grande o più piccolo.
   scontro(x, z, L) {
+    L *= this.fondale.scalaZ(z) / this.fondale.scalaZ(this.z);
     for (const o of this.fondale.ingombri || []) {
       if (o.x1 > x - L * 0.6 && o.x0 < x + L * 0.6 && Math.abs(o.z - z) < SPESSORE) return (o.x0 + o.x1) / 2;
     }
@@ -142,8 +144,8 @@ export class Polpo {
       const x = casuale(0.08, 0.92) * larghezza;
       const z = casuale(Z_FUORI, Z_MAX);
       let libero = true;
-      for (let k = 1; k <= 24 && libero; k++) {
-        const q = k / 24;
+      for (let k = 1; k <= 40 && libero; k++) {
+        const q = k / 40;
         if (this.scontro(this.x + (x - this.x) * q, this.z + (z - this.z) * q, L) !== null) libero = false;
       }
       if (libero && this.scontro(x, z, L) === null) return { x, z };
@@ -224,9 +226,14 @@ export class Polpo {
         // Strisciando non passa sopra agli altri animali: se il prossimo passo
         // lo porterebbe addosso a qualcuno, fa un piccolo balzo a nuoto e lo
         // scavalca (come fanno i polpi veri).
-        const passo = this.x + Math.sign(dx) * L * 0.15;
-        const davanti = this.animaleVicino(passo, this.z, L);
-        if (davanti && Math.sign(davanti.x - this.x) === Math.sign(dx)) {
+        // (Il passo conta anche la profondità, che cambia mentre cammina.)
+        const passo = this.x + Math.sign(dx) * Math.min(Math.abs(dx), L * 0.15);
+        const trattoP = this.meta.x - this.partenza.x;
+        const fattoP = Math.abs(trattoP) > 1 ? Math.min(1, Math.max(0, (passo - this.partenza.x) / trattoP)) : 1;
+        const zPasso = this.partenza.z + (this.meta.z - this.partenza.z) * fattoP;
+        const davanti = this.animaleVicino(passo, zPasso, L);
+        const giaVicino = this.animaleVicino(this.x, this.z, L);
+        if (davanti && (!giaVicino || Math.sign(davanti.x - this.x) === Math.sign(dx))) {
           this.vaiA(this.meta, larghezza, this.prossimo, true);
           return this.aggiorna(0, larghezza, altezza);
         }
@@ -280,7 +287,16 @@ export class Polpo {
         else this.stato = 'torna';
       }
     } else if (this.stato === 'torna') {
-      this.vaiA({ x: g.x, z: Z_FUORI }, larghezza, 'entra');
+      // Torna alla grotta: se strisciando dovrebbe passare attraverso un
+      // oggetto, ci va a nuoto passandoci sopra.
+      let libero = true;
+      for (let k = 1; k <= 40 && libero; k++) {
+        const q = k / 40;
+        const x = this.x + (g.x - this.x) * q;
+        const z = this.z + (Z_FUORI - this.z) * q;
+        if (q < 0.9 && this.scontro(x, z, L) !== null) libero = false;
+      }
+      this.vaiA({ x: g.x, z: Z_FUORI }, larghezza, 'entra', !libero);
     } else if (this.stato === 'entra') {
       // Rientra nella grotta (la profondità diminuisce).
       this.posa = 'terra';

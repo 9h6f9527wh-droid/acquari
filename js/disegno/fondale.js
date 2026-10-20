@@ -469,7 +469,7 @@ export class Fondale {
       this.sabbiaAlPiede(ctx, x, y, larghezzaBase, o.z);
       // Quanto spazio occupa sulla sabbia: serve agli animali che camminano.
       const mezzo = (larghezzaBase / 2) * 1.2;
-      this.ingombri.push({ x0: x - mezzo, x1: x + mezzo, z: o.z });
+      this.ingombri.push({ x0: x - mezzo, x1: x + mezzo, z: o.z, roccia: o.roccia ? o.indice : null });
     }
   }
 

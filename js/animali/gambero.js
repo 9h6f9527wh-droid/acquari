@@ -60,9 +60,22 @@ export class Gambero {
     return Math.min(roccia + (this.L || 0) * 0.12, sabbia);
   }
 
-  // Un altro animale sulla sabbia che starebbe addosso al gambero nel punto x.
+  // Un altro animale sulla sabbia che starebbe addosso al gambero nel punto x,
+  // oppure un corallo o una roccia (non la sua) alla sua profondità.
   animaleVicino(x, L) {
+    for (const o of this.fondale.ingombri || []) {
+      if (o.roccia === ROCCIA) continue;
+      if (o.x1 > x - L * 0.45 && o.x0 < x + L * 0.45 && Math.abs(o.z - this.z) < 0.07) return { x: (o.x0 + o.x1) / 2 };
+    }
     return this.fondale.animaleVicino ? this.fondale.animaleVicino(this, x, this.z, L * 0.45) : null;
+  }
+
+  // Vero se può camminare sulla sabbia da x fino a "meta" senza urtare niente.
+  stradaLibera(meta, L) {
+    for (let k = 1; k <= 12; k++) {
+      if (this.animaleVicino(this.x + (meta - this.x) * (k / 12), L)) return false;
+    }
+    return true;
   }
 
   // Vero se è in cima alla roccia (solo lì può pulire i pesci).
@@ -118,10 +131,19 @@ export class Gambero {
       this.prossimaDiscesa -= dt;
       if (this.prossimaDiscesa <= 0) {
         // Scende da uno dei due fianchi della roccia, se lì sotto è libero.
-        this.lato = Math.random() < 0.5 ? -1 : 1;
-        this.metaGiro = cima.x + this.lato * raggio * casuale(1.15, 1.45);
-        if (this.animaleVicino(this.metaGiro, L)) this.prossimaDiscesa = casuale(5, 10);
-        else this.stato = 'scende';
+        // Prova un lato a caso e, se lì sotto c'è qualcosa, l'altro.
+        const primo = Math.random() < 0.5 ? -1 : 1;
+        this.stato = 'attesa';
+        for (const lato of [primo, -primo]) {
+          const meta = cima.x + lato * raggio * casuale(1.15, 1.45);
+          if (this.stradaLibera(meta, L)) {
+            this.lato = lato;
+            this.metaGiro = meta;
+            this.stato = 'scende';
+            break;
+          }
+        }
+        if (this.stato !== 'scende') this.prossimaDiscesa = casuale(5, 10);
       } else if (this.attesa <= 0) {
         // Alterna l'attesa e qualche passo sulla cima della roccia.
         if (this.stato === 'attesa') {
@@ -151,7 +173,7 @@ export class Gambero {
           // Un altro piccolo giro, sempre dallo stesso lato della roccia.
           this.stato = 'giro';
           this.metaGiro = cima.x + this.lato * raggio * casuale(1.1, 1.7);
-          if (this.animaleVicino(this.metaGiro, L)) this.stato = 'risale';
+          if (!this.stradaLibera(this.metaGiro, L)) this.stato = 'risale';
         } else {
           this.stato = 'risale';
           this.giri = 0;

@@ -74,11 +74,11 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 > Scartati per non affollare: granchio (lo sostituisce il paguro), aragosta, pesce mandarino, murena.
 > Idea per più avanti: gambero pistolero e ghiozzo, che vivono in coppia in una tana nella sabbia.
 
-### 🟡 Fase 4c — Gli abitanti del fondo *(aggiunta su richiesta)*
+### ✅ Fase 4c — Gli abitanti del fondo *(aggiunta su richiesta)*
 - 🦐 **Gambero pulitore**: rosso e bianco, antenne lunghe; i pesci si fermano da lui per farsi "pulire".
 - 🐚 **Paguro**: cammina sulla sabbia con la sua conchiglia e ogni tanto la cambia con una più grande.
 
-### ⬜ Fase 4d — Il polpo 🐙 *(aggiunta su richiesta)*
+### 🟡 Fase 4d — Il polpo 🐙 *(aggiunta su richiesta)*
 - Vive nella **grotta** dello scoglio; esce strisciando sui tentacoli o nuotando a getto.
 - **Cambia colore** per mimetizzarsi; se si spaventa (tocco sullo schermo) lancia una **nuvola d'inchiostro** e scappa.
 
@@ -215,3 +215,4 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 | 4c | 2026-10-19 | Su richiesta, gambero e paguro più naturali con l'ambiente. Nuovo `js/animali/zampe.js`: **piedi piantati a terra** che si spostano a turno solo quando il corpo li supera (verificato: zero scivolamenti). Il fondale ora conosce la **forma esatta delle rocce** (`superficieRoccia`) e lo **spazio occupato dagli oggetti** (`ingombri`). Gambero: segue la superficie della roccia (più grande e piatta) e si inclina con lei, poggia sulla faccia di sopra (non sul bordo, che lo faceva sembrare sospeso), ombra di contatto, antenne più corte; quando pulisce resta sulla roccia e alza solo la parte davanti. Paguro: passa **davanti** a coralli, rocce e conchiglie invece di attraversarli, si ferma ogni tanto, conchiglia che poggia e dondola, ombra di contatto. Aggiunto `window.acquario` per le prove. |
 | 4c | 2026-10-19 | Su richiesta, il paguro **cammina su più livelli**: ogni meta ha anche una profondità (fascia di sabbia da metà fino al vetro), che cambia solo mentre cammina, in diagonale. Sceglie mete il cui percorso non attraversa oggetti alla sua stessa profondità; può passare davanti o **dietro** coralli e rocce: il fondale conserva un ritaglio di ogni oggetto in primo piano (`ridisegnaDavanti`) e lo ridisegna sopra di lui, così ne viene coperto. Piedi appoggiati fermi anche in altezza. Il gambero resta sulla sua stazione, come i gamberi pulitori veri. Verificato con 4 simulazioni da 10 minuti: nessun attraversamento. |
 | 4b | 2026-10-19 | Su richiesta: **balena più piccola** (circa un terzo in meno) con la pinna di sotto più corta e credibile; nuovo **squalo martello**, disegnato visto dall'alto perché si riconosca la testa a "T" (il corpo ondeggia di lato). La probabilità dello squalo è divisa tra i due. |
+| 4d | 2026-10-20 | Nuovo `js/animali/polpo.js` e `js/disegno/polpo.js`: il **polpo** vive nella grotta (disegnato tra i due fogli dello scoglio, al buio, con gli occhi che brillano), esce strisciando, si sposta sulla sabbia a più profondità senza attraversare gli oggetti, per i tragitti lunghi **nuota a getto**, riposa e si **mimetizza** prendendo il colore della sabbia, poi torna nella tana. A terra i tentacoli si aprono a raggiera sulla sabbia (alcuni verso di noi con le ventose in vista), con la membrana e le punte arricciate. **Primo tocco interattivo**: se lo tocchi diventa rosso scuro, spruzza una nuvola d'inchiostro e scappa nella grotta. Simulazione di 5 minuti: nessun errore, nessuno scontro. In attesa di prova sull'iPad. |

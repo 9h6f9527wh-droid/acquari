@@ -38,6 +38,11 @@ const abitanti = new Abitanti(fondale);
 // (non cambia nulla nel gioco).
 window.acquario = { fondale, pesci, abitanti };
 
+// Tocchi sullo schermo: li passiamo agli abitanti (il polpo si spaventa).
+canvas.addEventListener('pointerdown', (evento) => {
+  abitanti.tocco(evento.clientX, evento.clientY, larghezza, altezza);
+});
+
 function adattaAlloSchermo() {
   const densita = Math.min(window.devicePixelRatio || 1, MAX_DENSITA);
   larghezza = window.innerWidth;
@@ -80,6 +85,7 @@ function disegna() {
   // in mezzo, così la roccia davanti li copre.
   fondale.scoglio.disegnaRetro(ctx);
   pesci.disegna(ctx, 'tana', larghezza, altezza);
+  abitanti.disegnaTana(ctx, larghezza, altezza);
   fondale.scoglio.disegnaFronte(ctx);
   piante.disegnaSulloScoglio(ctx, larghezza, altezza);
   // Oggetti e piante davanti allo scoglio, verso di noi.

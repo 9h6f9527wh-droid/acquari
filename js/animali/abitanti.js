@@ -1,24 +1,39 @@
-// Gli abitanti della vasca che non sono pesci (per ora gambero pulitore e
-// paguro): li crea, li fa muovere e li disegna.
+// Gli abitanti della vasca che non sono pesci (gambero pulitore, paguro e
+// polpo): li crea, li fa muovere e li disegna.
 //
-// Stanno tutti davanti, vicino al vetro: vengono disegnati dopo i pesci
-// "davanti", così si vedono bene sopra la sabbia e le rocce.
+// Stanno davanti allo scoglio: vengono disegnati dopo i pesci "davanti".
+// Il polpo quando è nella grotta viene disegnato in mezzo ai due fogli dello
+// scoglio (disegnaTana), come i pesci.
 
 import { Gambero } from './gambero.js';
 import { Paguro, CONCHIGLIE } from './paguro.js';
+import { Polpo } from './polpo.js';
 import { disegnaGambero, disegnaPaguro, disegnaConchiglia } from '../disegno/invertebrati.js';
+import { disegnaPolpo } from '../disegno/polpo.js';
 
 export class Abitanti {
   constructor(fondale) {
     this.fondale = fondale;
     this.gambero = new Gambero(fondale);
     this.paguro = new Paguro(fondale);
+    this.polpo = new Polpo(fondale);
+  }
+
+  // Un tocco sullo schermo: per ora solo il polpo reagisce (si spaventa).
+  tocco(x, y, larghezza, altezza) {
+    return this.polpo.tocco(x, y, larghezza, altezza);
+  }
+
+  // Il polpo dentro la grotta (va disegnato tra i due fogli dello scoglio).
+  disegnaTana(ctx, larghezza, altezza) {
+    if (this.polpo.dentroTana && this.polpo.x !== null) disegnaPolpo(ctx, this.polpo, this.polpo.lunghezza(larghezza, altezza));
   }
 
   aggiorna(dt, larghezza, altezza) {
     this.fondale.controllaMisure(larghezza, altezza);
     this.gambero.aggiorna(dt, larghezza, altezza);
     this.paguro.aggiorna(dt, larghezza, altezza);
+    this.polpo.aggiorna(dt, larghezza, altezza);
   }
 
   disegna(ctx, larghezza, altezza) {
@@ -43,7 +58,16 @@ export class Abitanti {
       vuota();
       paguro();
     }
+    // Il polpo fuori dalla grotta (coperto dagli oggetti che ha davanti).
+    const o = this.polpo;
+    if (!o.dentroTana && o.x !== null) {
+      const Lo = o.lunghezza(larghezza, altezza);
+      disegnaPolpo(ctx, o, Lo);
+      if (o.posa === 'terra') this.fondale.ridisegnaDavanti(ctx, o.z, o.x - Lo, o.y - Lo, o.x + Lo, o.y + Lo * 0.2);
+    }
     const g = this.gambero;
     if (g.pronto) disegnaGambero(ctx, g, g.lunghezza(larghezza, altezza));
+    // La nuvola d'inchiostro sta davanti a tutto.
+    o.inchiostro.disegna(ctx);
   }
 }

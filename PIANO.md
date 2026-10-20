@@ -84,7 +84,7 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 
 ### ⬜ Fase 4e — Seppia e cavalluccio *(aggiunta su richiesta)*
 - 🦑 **Seppia fiammeggiante**: sospesa nell'acqua, con la pinna che ondeggia tutta intorno al corpo e onde di colore sulla pelle.
-- 🐴 **Cavalluccio marino**: nuota in verticale e si aggrappa alle piante con la coda.
+- 🐴 **Cavallucci marini, in coppia** *(su richiesta)*: nuotano in verticale, si aggrappano alle piante con la coda e stanno vicini tra loro.
 
 ### ⬜ Fase 4f — Anguille giardino e nudibranco *(aggiunta su richiesta)*
 - 🪱 **Anguille giardino**: una colonia che spunta dalla sabbia e ondeggia; se tocchi vicino, rientrano tutte nella sabbia.

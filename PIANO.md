@@ -82,16 +82,20 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 - Vive nella **grotta** dello scoglio; esce strisciando sui tentacoli o nuotando a getto.
 - **Cambia colore** per mimetizzarsi; se si spaventa (tocco sullo schermo) lancia una **nuvola d'inchiostro** e scappa.
 
-### 🟡 Fase 4e — Seppia e cavalluccio *(aggiunta su richiesta)*
+### ✅ Fase 4e — Seppia e cavalluccio *(aggiunta su richiesta)*
 - 🦑 **Seppia fiammeggiante**: sospesa nell'acqua, con la pinna che ondeggia tutta intorno al corpo e onde di colore sulla pelle.
 - 🐴 **Cavallucci marini, in coppia** *(su richiesta)*: nuotano in verticale, si aggrappano alle piante con la coda e stanno vicini tra loro.
 
-### ⬜ Fase 4f — Anguille giardino e nudibranco *(aggiunta su richiesta)*
-- 🪱 **Anguille giardino**: una colonia che spunta dalla sabbia e ondeggia; se tocchi vicino, rientrano tutte nella sabbia.
-- 🐌 **Nudibranco**: minuscola lumaca di mare coloratissima che striscia sulle rocce.
+### ⬜ Fase 4f — Il nudibranco 🐌 *(aggiunta su richiesta)*
+- Minuscola lumaca di mare coloratissima che striscia sulle rocce.
+- *(Le anguille giardino sono state tolte su richiesta, il 2026-10-20.)*
 
 ### ⬜ Fase 4g — Il pesce palla 🐡 *(aggiunta su richiesta)*
 - Nuota goffo e, se lo tocchi o si spaventa, **si gonfia** come un pallone e poi si sgonfia piano.
+
+### ⬜ Fase 4h — La medusa 🪼 *(aggiunta su richiesta, spostata qui prima di giorno e notte)*
+- Il corpo pulsa e i tentacoli fluttuano dietro; si lascia portare dalla corrente.
+- Di giorno è trasparente, con un bagliore leggero; il **blu fluo** si accenderà di notte, quando arriverà la Fase 5b.
 
 ---
 
@@ -107,10 +111,8 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 ### ⬜ Fase 5b — Giorno e notte *(aggiunta su richiesta)*
 - La luce segue l'orologio del gioco: alba, giorno, tramonto e notte.
 - Di notte l'acqua diventa blu scuro e brillano di più le lucine della grotta e le punte degli anemoni.
-
-### ⬜ Fase 5c — La medusa 🪼 *(aggiunta su richiesta)*
-- Il corpo pulsa e i tentacoli fluttuano dietro; si lascia portare dalla corrente.
-- **Di notte si illumina di blu fluo.**
+- **Di notte la medusa si illumina di blu fluo.**
+- *(Deciso insieme: giorno e notte si fanno dopo aver aggiunto tutti gli animali.)*
 
 ### ⬜ Fase 6 — Fame e cibo
 - Tocchi la vasca e cadono scaglie di cibo; i pesci le vedono e le inseguono.
@@ -223,3 +225,4 @@ Lo costruiamo a piccole fasi: ognuna aggiunge una o due novità, che puoi provar
 | 4e | 2026-10-20 | Nuovi `js/animali/seppia.js`, `js/disegno/seppia.js`, `js/animali/cavallucci.js`, `js/disegno/cavalluccio.js`. **Seppia fiammeggiante**: mantello scuro bruno-violaceo con macchie crema, onde di colore scure che le corrono sulla pelle, una pinna sottile e increspata tutto intorno al corpo su cui scorre un'onda, occhio con la pupilla a "W", braccia a cono con le punte gialle (le due di sopra alzate). Fluttua poco sopra la sabbia, si ferma, per spostamenti brevi va anche all'indietro; ogni tanto si posa e **cammina** sulla sabbia con due braccia e due lembi (piedi appoggiati, come gli altri animali). Se la **tocchi** lampeggia di giallo e bianco e scappa all'indietro. Non attraversa oggetti né animali. **Coppia di cavallucci** (lei corallo, lui giallo con la tasca sul ventre): si aggrappano con la coda alle foglie dello stesso ciuffo d'erba, uno per lato, guardandosi, e dondolano con la foglia; ogni tanto cambiano ciuffo (parte uno e l'altro lo segue accanto); ogni tanto si **salutano**: si staccano, si mettono uno di fronte all'altra e salgono e scendono insieme con i colori più accesi. Le piante ora dicono dove si trova in ogni istante un punto di una foglia (`puntoFoglia`). Simulazioni di 10 minuti: nessun errore; la seppia sfiora gli oggetti solo per pochi fotogrammi al limite. In attesa di prova sull'iPad. |
 | 4e | 2026-10-20 | Su richiesta: **cavallucci più piccoli** (circa un quarto in meno); i **pesci ogni tanto salgono nella parte alta della vasca**: nuovo comportamento "inAlto" (2–4 tappe vicino alla superficie) per pagliaccio e chirurgo, e circa un giro su tre del banco passa in alto. In 15 minuti simulati il tempo passato nel terzo alto della vasca è salito dal 14% al 24% (pagliaccio), dall'11% al 29% (chirurgo) e dal 20% al 28% (banco). Corretto anche l'**anemone rosa** sulla roccia di sinistra: poggiava sul bordo di dietro della roccia (sembrava sospeso) e i suoi tentacoli passavano davanti al corallo rosa che invece è più vicino al vetro. Ora gli anemoni poggiano sulla faccia di sopra della roccia, con un piede allargato e un'ombra, e per tutte le piante gli oggetti che stanno davanti vengono ridisegnati sopra di loro. |
 | 4e | 2026-10-20 | Su richiesta, due novità per l'ambiente. **Il giardino del polpo** (nuovo `js/disegno/tesori.js`): davanti alla grotta ci sono dei "tesori" (conchiglia a ventaglio, conchiglietta a punta, ciottoli, guscio di riccio, vetro levigato dal mare); ogni tanto il polpo, finito il riposo, fruga nella sabbia, trova un tesoro, se lo porta a casa tra i tentacoli e lo posa davanti alla tana prima di entrare (come fanno i polpi veri). Il giardino ha 10 posti ai lati dell'ingresso; quando è pieno, il tesoro più vecchio sparisce (portato via dalla corrente). **Una gorgonia** (ventaglio di mare, nuovo `js/disegno/gorgonia.js`) viola sulla roccia di destra: rami che si dividono a ventaglio e si saldano tra loro a rete, piccoli polipi chiari, ondeggia piano con la corrente. I cavallucci possono aggrapparsi anche ai suoi rami, uno per lato. Inoltre la seppia, se mentre si posa sulla sabbia arriva qualcuno sotto di lei, rinuncia e torna su. |
+| — | 2026-10-20 | Su richiesta: **tolte le anguille giardino** (la Fase 4f resta con il solo nudibranco); la **medusa** passa dalla Fase 5c alla nuova **Fase 4h**, così arrivano prima tutti gli animali e poi il tempo e giorno/notte (il blu fluo della medusa si accenderà con la notte, nella Fase 5b). |

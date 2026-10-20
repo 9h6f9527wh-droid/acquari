@@ -14,6 +14,8 @@
 // Cosa fa (i "comportamenti", con frequenze diverse per ogni specie):
 //  - vaga:      sceglie un punto qualsiasi della vasca e ci va;
 //  - perlustra: nuota piano vicino al fondo, tra rocce e coralli;
+//  - inAlto:    sale nella parte alta della vasca e ci fa un giretto, vicino
+//               alla superficie, poi torna alle sue abitudini;
 //  - banco:     resta con il suo gruppo (vedi banco.js);
 //  - anemone:   va a giocare tra i tentacoli dell'anemone, la sua casa;
 //  - grotta:    entra nella grotta dello scoglio, riposa un po' al buio ed esce;
@@ -114,6 +116,22 @@ export class Pesce {
 
     if (c.tipo === 'vaga') {
       if (arrivato) this.scegli(larghezza, altezza);
+      return;
+    }
+
+    if (c.tipo === 'inAlto') {
+      // Due-quattro tappe nella parte alta dell'acqua, poi si torna alla vita di sempre.
+      if (!this.obiettivo || arrivato) {
+        if (c.quante === undefined) c.quante = Math.floor(casuale(2, 5));
+        if (c.passo >= c.quante) {
+          this.scegli(larghezza, altezza);
+          return;
+        }
+        c.passo++;
+        const x = casuale(0.08, 0.92) * larghezza;
+        const z = Math.min(Z_MAX, Math.max(Z_MIN, this.z + casuale(-0.25, 0.25)));
+        this.obiettivo = { x, y: casuale(0.09, 0.3) * altezza, z };
+      }
       return;
     }
 
@@ -259,7 +277,7 @@ export class Pesce {
       const vicino = Math.hypot(o.x - this.x, o.y - this.y) < L * (o.lento ? 0.35 : 0.6);
       // Mentre vaga basta arrivare al punto: la profondità può restare indietro
       // (per esempio se lo scoglio gli impedisce di cambiare lato).
-      arrivato = vicino && (this.comportamento.tipo === 'vaga' || Math.abs(o.z - this.z) < 0.05);
+      arrivato = vicino && (this.comportamento.tipo === 'vaga' || this.comportamento.tipo === 'inAlto' || Math.abs(o.z - this.z) < 0.05);
     }
     this.aggiornaComportamento(dt, larghezza, altezza, arrivato);
     const ob = this.obiettivo;

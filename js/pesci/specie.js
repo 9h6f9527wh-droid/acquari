@@ -75,7 +75,7 @@ export const SPECIE = {
       dimenio: 0.9, // quanto si dimena: il pagliaccio nuota "a scatti" e ondeggiando
     },
     // Quanto spesso sceglie ogni comportamento (vedi pesce.js).
-    comportamenti: { vaga: 0.5, anemone: 0.17, grotta: 0.15, passaggio: 0.1, pulizia: 0.08 },
+    comportamenti: { vaga: 0.45, inAlto: 0.12, anemone: 0.17, grotta: 0.13, passaggio: 0.1, pulizia: 0.08 },
     // Il pagliaccio vive tra i tentacoli dell'anemone (quello arancione, sulla roccia 0).
     anemone: 0,
   },
@@ -132,7 +132,7 @@ export const SPECIE = {
     // È troppo grande per la grotta e il tunnel: gira per la vasca,
     // perlustra il fondo (più avanti brucherà le alghe sulle rocce) e va
     // spesso a farsi pulire dal gambero.
-    comportamenti: { vaga: 0.5, perlustra: 0.32, pulizia: 0.18 },
+    comportamenti: { vaga: 0.42, inAlto: 0.2, perlustra: 0.25, pulizia: 0.15 },
   },
 
   banggai: {

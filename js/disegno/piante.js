@@ -321,6 +321,16 @@ export class Piante {
     const m = p.misura * scala;
     const c = p.colore;
 
+    // Ombra e piede allargato dove si attacca alla roccia.
+    ctx.fillStyle = 'rgba(8, 18, 24, 0.3)';
+    ctx.beginPath();
+    ctx.ellipse(x, y + 1, m * 0.36, m * 0.07, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = hsl(c, -22);
+    ctx.beginPath();
+    ctx.ellipse(x, y, m * 0.27, m * 0.05, 0, 0, Math.PI * 2);
+    ctx.fill();
+
     // Colonna: il "piede" dell'anemone.
     const colonna = ctx.createLinearGradient(x - m * 0.25, 0, x + m * 0.25, 0);
     colonna.addColorStop(0, hsl(c, -20));
@@ -371,9 +381,11 @@ export class Piante {
       x = fondale.scoglio.appoggio.x;
       y = fondale.scoglio.appoggio.y;
     } else if (p.roccia !== undefined) {
+      // Non sul bordo più alto della roccia (sembrerebbe sospesa dietro), ma
+      // un po' più avanti, sulla faccia di sopra che vediamo.
       const cima = fondale.cimeRocce[p.roccia];
       x = cima.x;
-      y = cima.y;
+      y = cima.y + cima.larghezza * 0.035;
     } else if (p.lontana) {
       x = p.x * larghezza;
       y = fondale.lineaLontana(p.x) * altezza + 4;
@@ -423,6 +435,13 @@ export class Piante {
       else if (p.tipo === 'kelp') this.disegnaKelp(ctx, p, x, y, scala);
       else if (p.tipo === 'piuma') this.disegnaPiuma(ctx, p, x, y, scala);
       else if (p.tipo === 'anemone') this.disegnaAnemone(ctx, p, x, y, fondale.misuraBase(larghezza, altezza) * scalaZ);
+
+      // Le piante sono disegnate dopo rocce e coralli: se un oggetto le sta
+      // davanti (più vicino al vetro), lo ridisegniamo sopra, così le copre.
+      if (!p.lontana && p.z > Z_SCOGLIO) {
+        const m = p.tipo === 'anemone' ? p.misura * fondale.misuraBase(larghezza, altezza) * scalaZ : p.altezza * scala;
+        fondale.ridisegnaDavanti(ctx, p.z, x - m * 0.8, y - m * 1.1, x + m * 0.8, y + 2);
+      }
     }
   }
 

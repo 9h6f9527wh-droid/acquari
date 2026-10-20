@@ -66,12 +66,15 @@ export class Banco {
 
   // Un punto a caso nell'acqua aperta, sopra lo scoglio (così il gruppo non
   // ci passa attraverso) e sotto la superficie.
-  puntoInAcqua(larghezza, altezza) {
+  // Con "alto" il punto sta nella parte alta della vasca, vicino alla superficie.
+  puntoInAcqua(larghezza, altezza, alto = false) {
     const s = this.fondale.scoglio;
     const cimaScoglio = s.base ? s.base - s.H : altezza * 0.55;
     return {
       x: casuale(0.12, 0.88) * larghezza,
-      y: casuale(altezza * 0.16, Math.max(altezza * 0.2, Math.min(altezza * 0.55, cimaScoglio - altezza * 0.06))),
+      y: alto
+        ? casuale(altezza * 0.1, altezza * 0.28)
+        : casuale(altezza * 0.16, Math.max(altezza * 0.2, Math.min(altezza * 0.55, cimaScoglio - altezza * 0.06))),
       z: casuale(0.3, 0.85),
     };
   }
@@ -104,7 +107,9 @@ export class Banco {
         // Si parte per un giro: qualche tappa in acqua aperta, poi una sosta.
         this.stato = 'giro';
         const quante = Math.floor(casuale(2, 5));
-        this.tappe = Array.from({ length: quante }, () => this.puntoInAcqua(larghezza, altezza));
+        // Ogni tanto il giro passa in alto, vicino alla superficie.
+        const alto = Math.random() < 0.35;
+        this.tappe = Array.from({ length: quante }, () => this.puntoInAcqua(larghezza, altezza, alto));
         const soste = this.puntiDiSosta(larghezza, altezza);
         this.tappe.push({ ...soste[Math.floor(Math.random() * soste.length)], sosta: true });
       }

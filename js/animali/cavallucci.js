@@ -54,7 +54,7 @@ export class Cavallucci {
   }
 
   lunghezza(c, larghezza, altezza) {
-    return 0.075 * this.fondale.misuraBase(larghezza, altezza) * this.fondale.scalaZ(c.z);
+    return 0.055 * this.fondale.misuraBase(larghezza, altezza) * this.fondale.scalaZ(c.z);
   }
 
   // Due foglie dello stesso ciuffo, una per lato (così stanno vicini ma non

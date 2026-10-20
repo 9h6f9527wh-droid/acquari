@@ -122,11 +122,18 @@ export class Polpo {
   }
 
   // Se nel punto (x, z) finirebbe dentro un oggetto, il centro dell'oggetto; se no null.
+  // Contano anche gli altri animali sulla sabbia (paguro, conchiglia, gambero).
   scontro(x, z, L) {
     for (const o of this.fondale.ingombri || []) {
       if (o.x1 > x - L * 0.6 && o.x0 < x + L * 0.6 && Math.abs(o.z - z) < SPESSORE) return (o.x0 + o.x1) / 2;
     }
-    return null;
+    const a = this.animaleVicino(x, z, L);
+    return a ? a.x : null;
+  }
+
+  // Un altro animale che starebbe addosso al polpo nel punto (x, z), o null.
+  animaleVicino(x, z, L) {
+    return this.fondale.animaleVicino ? this.fondale.animaleVicino(this, x, z, L * 0.7) : null;
   }
 
   // Una meta sulla sabbia (x e profondità) raggiungibile senza attraversare niente.
@@ -145,12 +152,13 @@ export class Polpo {
   }
 
   // Parte verso una meta: strisciando se è vicina, nuotando se è lontana.
-  vaiA(meta, larghezza, prossimo) {
+  // Con "nuotando" va a nuoto anche se è vicina (per passare sopra a qualcuno).
+  vaiA(meta, larghezza, prossimo, nuotando = false) {
     this.meta = meta;
     this.angolo = meta.x >= this.x ? 0 : Math.PI;
     this.partenza = { x: this.x, z: this.z, y: this.y };
     this.prossimo = prossimo;
-    this.stato = Math.abs(meta.x - this.x) > larghezza * 0.3 ? 'nuota' : 'striscia';
+    this.stato = nuotando || Math.abs(meta.x - this.x) > larghezza * 0.3 ? 'nuota' : 'striscia';
     this.verso = Math.sign(meta.x - this.x) || this.verso;
   }
 
@@ -191,7 +199,8 @@ export class Polpo {
       this.y = g.y;
       this.z = Z_SCOGLIO - 0.01;
       this.attesa -= dt;
-      if (this.attesa <= 0) this.stato = 'esce';
+      // Esce solo se davanti alla grotta non c'è nessuno.
+      if (this.attesa <= 0 && !this.animaleVicino(g.x, Z_FUORI, L)) this.stato = 'esce';
     } else if (this.stato === 'esce') {
       // Striscia fuori, verso di noi (la profondità aumenta).
       this.z = Math.min(Z_FUORI, this.z + dt * 0.05);
@@ -210,7 +219,30 @@ export class Polpo {
       // Il nuoto è a spinte: veloce durante la spinta, poi plana.
       const spinta = nuoto ? 0.35 + 1.5 * Math.max(0, Math.sin(this.tempo * (veloce ? 5 : 3))) ** 2 : 1;
       const v = L * (nuoto ? (veloce ? 2.4 : 1.1) : 0.32) * spinta;
-      const dx = this.meta.x - this.x;
+      let dx = this.meta.x - this.x;
+      if (!nuoto) {
+        // Strisciando non passa sopra agli altri animali: se il prossimo passo
+        // lo porterebbe addosso a qualcuno, fa un piccolo balzo a nuoto e lo
+        // scavalca (come fanno i polpi veri).
+        const passo = this.x + Math.sign(dx) * L * 0.15;
+        const davanti = this.animaleVicino(passo, this.z, L);
+        if (davanti && Math.sign(davanti.x - this.x) === Math.sign(dx)) {
+          this.vaiA(this.meta, larghezza, this.prossimo, true);
+          return this.aggiorna(0, larghezza, altezza);
+        }
+      } else if (this.posa === 'nuoto' && this.stato !== 'spavento') {
+        // Prima di posarsi controlla che il punto d'arrivo sia ancora libero:
+        // se nel frattempo è arrivato qualcuno, sceglie un altro posto.
+        const tratto0 = this.meta.x - this.partenza.x;
+        const fatto0 = Math.abs(tratto0) > 1 ? (this.x - this.partenza.x) / tratto0 : 1;
+        if (fatto0 > 0.6 && this.prossimo !== 'entra' && this.animaleVicino(this.meta.x, this.meta.z, L)) {
+          const nuova = this.scegliMeta(larghezza, L);
+          if (nuova) {
+            this.vaiA(nuova, larghezza, this.prossimo, true);
+            dx = this.meta.x - this.x;
+          }
+        }
+      }
       this.x += Math.sign(dx) * Math.min(Math.abs(dx), v * dt);
       const tratto = this.meta.x - this.partenza.x;
       const fatto = Math.abs(tratto) > 1 ? Math.min(1, Math.max(0, (this.x - this.partenza.x) / tratto)) : 1;

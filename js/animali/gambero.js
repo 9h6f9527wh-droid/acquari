@@ -60,6 +60,11 @@ export class Gambero {
     return Math.min(roccia + (this.L || 0) * 0.12, sabbia);
   }
 
+  // Un altro animale sulla sabbia che starebbe addosso al gambero nel punto x.
+  animaleVicino(x, L) {
+    return this.fondale.animaleVicino ? this.fondale.animaleVicino(this, x, this.z, L * 0.45) : null;
+  }
+
   // Vero se è in cima alla roccia (solo lì può pulire i pesci).
   inCima() {
     return this.stato === 'attesa' || this.stato === 'passeggia' || this.stato === 'pulisce';
@@ -112,10 +117,11 @@ export class Gambero {
       this.attesa -= dt;
       this.prossimaDiscesa -= dt;
       if (this.prossimaDiscesa <= 0) {
-        // Scende da uno dei due fianchi della roccia.
-        this.stato = 'scende';
+        // Scende da uno dei due fianchi della roccia, se lì sotto è libero.
         this.lato = Math.random() < 0.5 ? -1 : 1;
         this.metaGiro = cima.x + this.lato * raggio * casuale(1.15, 1.45);
+        if (this.animaleVicino(this.metaGiro, L)) this.prossimaDiscesa = casuale(5, 10);
+        else this.stato = 'scende';
       } else if (this.attesa <= 0) {
         // Alterna l'attesa e qualche passo sulla cima della roccia.
         if (this.stato === 'attesa') {
@@ -145,6 +151,7 @@ export class Gambero {
           // Un altro piccolo giro, sempre dallo stesso lato della roccia.
           this.stato = 'giro';
           this.metaGiro = cima.x + this.lato * raggio * casuale(1.1, 1.7);
+          if (this.animaleVicino(this.metaGiro, L)) this.stato = 'risale';
         } else {
           this.stato = 'risale';
           this.giri = 0;
@@ -166,8 +173,20 @@ export class Gambero {
     }
     if (this.inCima()) meta = Math.min(cima.x + limite, Math.max(cima.x - limite, meta));
 
-    // Cammina verso la meta, piano.
-    const dx = meta - this.x;
+    // Sulla sabbia non va addosso agli altri animali: se ha qualcuno davanti
+    // si ferma a frugare lì, e poi torna sulla roccia.
+    let dx = meta - this.x;
+    if (!this.inCima() && Math.abs(dx) > 1) {
+      const davanti = this.animaleVicino(this.x + Math.sign(dx) * L * 0.2, L);
+      if (davanti && Math.sign(davanti.x - this.x) === Math.sign(dx)) {
+        dx = 0;
+        if (this.stato === 'scende' || this.stato === 'giro') {
+          this.stato = 'fruga';
+          this.attesa = casuale(1, 2);
+          this.giri = 3; // dopo questa sosta risale
+        }
+      }
+    }
     if (Math.abs(dx) > 1) {
       this.x += Math.sign(dx) * Math.min(Math.abs(dx), L * velocita * dt);
       if (this.stato !== 'pulisce') this.verso = Math.sign(dx);

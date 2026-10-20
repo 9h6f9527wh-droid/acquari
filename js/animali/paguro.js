@@ -73,7 +73,18 @@ export class Paguro {
     }
     // Anche la conchiglia vuota è un ostacolo (tranne quando ci va apposta).
     const xv = this.vuota.x * (this.larghezza || 1);
-    return Math.abs(xv - x) < L * 0.6 && Math.abs(this.z0Vuota - z) < SPESSORE ? xv : null;
+    if (Math.abs(xv - x) < L * 0.6 && Math.abs(this.z0Vuota - z) < SPESSORE) return xv;
+    // E gli altri animali sulla sabbia (il polpo, il gambero quando scende).
+    const a = this.animaleVicino(x, z, L);
+    return a ? a.x : null;
+  }
+
+  // Un altro animale (non la conchiglia vuota, che conta già sopra) che
+  // starebbe addosso al paguro nel punto (x, z), o null.
+  animaleVicino(x, z, L) {
+    if (!this.fondale.animaleVicino) return null;
+    const a = this.fondale.animaleVicino(this, x, z, L * 0.55);
+    return a && a.chi !== 'conchiglia' ? a : null;
   }
 
   // Sceglie una nuova meta (x e profondità) controllando che il percorso in
@@ -205,6 +216,23 @@ export class Paguro {
         this.stato = 'fruga';
         this.attesa = casuale(2, 4);
         this.prossimoTrasloco = casuale(120, 240);
+      }
+    }
+
+    // Se il prossimo passo lo porterebbe addosso a un altro animale, si ferma
+    // e poi sceglie un'altra strada.
+    if (velocita > 0) {
+      const davanti = this.animaleVicino(this.x + this.verso * L * 0.2, this.z, L);
+      if (davanti && Math.sign(davanti.x - this.x) === this.verso) {
+        velocita = 0;
+        if (this.stato === 'cammina') {
+          this.meta = null;
+          this.stato = 'sosta';
+          this.attesa = casuale(0.8, 1.6);
+        } else if (this.stato === 'versoConchiglia') {
+          // Aspetta che si liberi (il polpo e il gambero prima o poi se ne vanno).
+          this.meta = null;
+        }
       }
     }
 

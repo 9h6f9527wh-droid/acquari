@@ -3,8 +3,9 @@
 // riappoggia. I piedi si muovono a turno (mai due vicini insieme), come negli
 // animali veri. Così le zampe non "scivolano" sul terreno.
 //
-// I piedi sono in coordinate dello schermo e poggiano su "suolo(x)", che dice
-// a che altezza è il terreno (sabbia o roccia) in ogni punto.
+// I piedi sono in coordinate dello schermo e poggiano su "suolo(x, i)", che
+// dice a che altezza è il terreno (sabbia o roccia) per il piede i nel punto x
+// (ogni piede può appoggiarsi a una profondità diversa, come i tentacoli).
 
 export class Zampe {
   constructor(quante, { passo, durata, alzata }) {
@@ -21,7 +22,7 @@ export class Zampe {
     this.piedi.forEach((p, i) => {
       const meta = riposo[i];
       if (!p) {
-        this.piedi[i] = { x: meta, y: suolo(meta), volo: null };
+        this.piedi[i] = { x: meta, y: suolo(meta, i), volo: null };
         return;
       }
       if (p.volo !== null) {
@@ -29,7 +30,7 @@ export class Zampe {
         p.volo = Math.min(1, p.volo + dt / this.durata);
         const t = p.volo * p.volo * (3 - 2 * p.volo);
         p.x = p.da + (p.a - p.da) * t;
-        p.y = suolo(p.x) - Math.sin(Math.PI * p.volo) * this.alzata * scala;
+        p.y = suolo(p.x, i) - Math.sin(Math.PI * p.volo) * this.alzata * scala;
         if (p.volo >= 1) p.volo = null;
         return;
       }
@@ -44,6 +45,11 @@ export class Zampe {
         p.a = meta + Math.sign(meta - p.x) * passo * 0.5;
       }
     });
+  }
+
+  // Dimentica dove erano i piedi (per esempio quando l'animale smette di nuotare).
+  stacca() {
+    this.piedi = this.piedi.map(() => null);
   }
 
   // Vero se qualche piede si sta muovendo (serve per far ondeggiare il corpo).

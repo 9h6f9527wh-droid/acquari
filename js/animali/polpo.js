@@ -15,6 +15,23 @@
 // (e se passa dietro a un corallo, il corallo lo copre).
 
 import { Z_SCOGLIO } from '../disegno/fondale.js';
+import { Zampe } from './zampe.js';
+
+// I tentacoli camminano come zampe: le punte restano appoggiate sulla sabbia
+// finché il corpo non le supera, poi si staccano, si allungano in avanti ad
+// arco e si riappoggiano. Per ogni tentacolo: dove appoggia la punta rispetto
+// al corpo (dietro/davanti, in lunghezze del polpo) e a che profondità
+// (positivo = verso di noi, più in basso sullo schermo; negativo = verso il fondo).
+export const BRACCIA = [
+  { avanti: -0.6, profondita: -0.06 },
+  { avanti: -0.48, profondita: 0.12 },
+  { avanti: -0.3, profondita: -0.09 },
+  { avanti: -0.14, profondita: 0.17 },
+  { avanti: 0.1, profondita: 0.15 },
+  { avanti: 0.28, profondita: -0.08 },
+  { avanti: 0.46, profondita: 0.1 },
+  { avanti: 0.6, profondita: -0.05 },
+];
 
 function casuale(min, max) {
   return min + Math.random() * (max - min);
@@ -93,6 +110,7 @@ export class Polpo {
     this.angolo = 0; // direzione del nuoto
     this.movimento = 0; // quanto si stanno muovendo i tentacoli
     this.inchiostro = new Inchiostro();
+    this.braccia = new Zampe(BRACCIA.length, { passo: 0.32, durata: 0.45, alzata: 0.14 });
   }
 
   lunghezza(larghezza, altezza) {
@@ -244,6 +262,16 @@ export class Polpo {
         this.stato = 'tana';
         this.attesa = casuale(20, 45);
       }
+    }
+
+    // Tentacoli: a terra camminano come zampe; nel nuoto stanno dietro, sciolti.
+    if (this.posa === 'terra') {
+      const stretto = this.dentroTana ? 0.55 : 1; // nella grotta sta raccolto
+      const fondo = this.dentroTana ? () => g.y : (x) => this.suolo(x, this.z, larghezza, altezza);
+      const riposo = BRACCIA.map((b) => this.x + this.verso * b.avanti * L * stretto);
+      this.braccia.aggiorna(dt, riposo, (x, i) => fondo(x) + BRACCIA[i].profondita * L * stretto, L);
+    } else {
+      this.braccia.stacca();
     }
 
     // Quando si muove torna al suo colore; lo spavento svanisce piano.

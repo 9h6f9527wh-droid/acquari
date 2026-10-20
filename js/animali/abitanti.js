@@ -63,7 +63,7 @@ export class Abitanti {
     if (!o.dentroTana && o.x !== null) {
       const Lo = o.lunghezza(larghezza, altezza);
       disegnaPolpo(ctx, o, Lo);
-      if (o.posa === 'terra') this.fondale.ridisegnaDavanti(ctx, o.z, o.x - Lo, o.y - Lo, o.x + Lo, o.y + Lo * 0.2);
+      this.fondale.ridisegnaDavanti(ctx, o.z, o.x - Lo, o.y - Lo, o.x + Lo, o.y + Lo * 0.3);
     }
     const g = this.gambero;
     if (g.pronto) disegnaGambero(ctx, g, g.lunghezza(larghezza, altezza));

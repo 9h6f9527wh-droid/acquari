@@ -59,15 +59,20 @@ export class Abitanti {
     this.fondale.controllaMisure(larghezza, altezza);
     // Restituisce l'animale che starebbe addosso a "chi" se fosse nel punto
     // (x, z) con mezza larghezza "mezzo"; null se lì è libero.
+    // (La lista di chi sta a terra si fa una volta per fotogramma: i controlli
+    // sono tanti e rifarla ogni volta rallenterebbe.)
+    let elenco = this.aTerra(larghezza, altezza);
     this.fondale.animaleVicino = (chi, x, z, mezzo) => {
-      for (const a of this.aTerra(larghezza, altezza)) {
+      for (const a of elenco) {
         if (a.chi === chi) continue;
         if (Math.abs(a.x - x) < a.mezzo + mezzo && Math.abs(a.z - z) < SPESSORE_ANIMALI) return a;
       }
       return null;
     };
     this.gambero.aggiorna(dt, larghezza, altezza);
+    elenco = this.aTerra(larghezza, altezza);
     this.paguro.aggiorna(dt, larghezza, altezza);
+    elenco = this.aTerra(larghezza, altezza);
     this.polpo.aggiorna(dt, larghezza, altezza);
   }
 

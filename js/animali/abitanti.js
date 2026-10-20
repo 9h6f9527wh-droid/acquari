@@ -14,6 +14,7 @@ import { disegnaGambero, disegnaPaguro, disegnaConchiglia } from '../disegno/inv
 import { disegnaPolpo } from '../disegno/polpo.js';
 import { disegnaCavalluccio } from '../disegno/cavalluccio.js';
 import { disegnaSeppia } from '../disegno/seppia.js';
+import { disegnaTesoro } from '../disegno/tesori.js';
 
 // Due animali a meno di questa differenza di profondità si scontrano.
 const SPESSORE_ANIMALI = 0.1;
@@ -21,6 +22,7 @@ const SPESSORE_ANIMALI = 0.1;
 export class Abitanti {
   constructor(fondale, piante) {
     this.fondale = fondale;
+    this.piante = piante;
     this.cavallucci = new Cavallucci(fondale, piante);
     this.seppia = new Seppia(fondale);
     this.gambero = new Gambero(fondale);
@@ -65,6 +67,18 @@ export class Abitanti {
 
   aggiorna(dt, larghezza, altezza) {
     this.fondale.controllaMisure(larghezza, altezza);
+    // La gorgonia occupa spazio sulla sabbia come un corallo: gli animali che
+    // camminano le girano intorno. (La lista degli ingombri si rifà quando
+    // cambia la misura dello schermo: allora la aggiungiamo di nuovo.)
+    if (this.fondale.ingombri && this.ingombriVisti !== this.fondale.ingombri) {
+      this.ingombriVisti = this.fondale.ingombri;
+      for (const g of this.piante.gorgonie) {
+        if (g.roccia !== undefined) continue; // sulla roccia: c'è già la roccia
+        const { x, scala } = g.base(this.fondale, larghezza, altezza);
+        const mezzo = g.mezzaLarghezza * scala * 0.7;
+        this.fondale.ingombri.push({ x0: x - mezzo, x1: x + mezzo, z: g.z, roccia: null });
+      }
+    }
     // Restituisce l'animale che starebbe addosso a "chi" se fosse nel punto
     // (x, z) con mezza larghezza "mezzo"; null se lì è libero.
     // (La lista di chi sta a terra si fa una volta per fotogramma: i controlli
@@ -114,14 +128,28 @@ export class Abitanti {
         },
       });
     }
-    // Il polpo fuori dalla grotta.
+    // Il giardino del polpo: i tesori davanti alla grotta.
     const o = this.polpo;
+    const M = this.fondale.misuraBase(larghezza, altezza);
+    if (this.fondale.scoglio.grotta) {
+      for (const t of o.giardino) {
+        const p = o.postoTesoro(t, larghezza, altezza);
+        disegni.push({ z: p.z, fai: () => disegnaTesoro(ctx, t.tipo, p.x, p.y, 0.034 * M * this.fondale.scalaZ(p.z), p.z, t.giro) });
+      }
+    }
+    // Il polpo fuori dalla grotta.
     if (!o.dentroTana && o.x !== null) {
       disegni.push({
         z: o.z,
         fai: () => {
           const Lo = o.lunghezza(larghezza, altezza);
           disegnaPolpo(ctx, o, Lo);
+          // Il tesoro che porta, stretto tra i tentacoli davanti.
+          if (o.porta) {
+            const tx = o.posa === 'nuoto' ? o.x - Math.cos(o.angolo) * Lo * 0.15 : o.x + o.verso * Lo * 0.12;
+            const ty = o.posa === 'nuoto' ? o.y + Lo * 0.12 : o.y + Lo * 0.02;
+            disegnaTesoro(ctx, o.porta, tx, ty, 0.03 * M * this.fondale.scalaZ(o.z), o.z, 0.5);
+          }
           this.fondale.ridisegnaDavanti(ctx, o.z, o.x - Lo, o.y - Lo, o.x + Lo, o.y + Lo * 0.3);
         },
       });
@@ -158,6 +186,17 @@ export class Abitanti {
           const Ls = s.lunghezza(larghezza, altezza);
           disegnaSeppia(ctx, s, Ls);
           this.fondale.ridisegnaDavanti(ctx, s.z, s.x - Ls * 0.7, s.y - Ls * 0.5, s.x + Ls * 0.7, s.y + Ls * (0.3 + s.alto));
+        },
+      });
+    }
+    for (const g of this.piante.gorgonie) {
+      disegni.push({
+        z: g.z,
+        fai: () => {
+          g.disegna(ctx, this.fondale, larghezza, altezza, this.piante.tempo);
+          const { x, y, scala } = g.base(this.fondale, larghezza, altezza);
+          const mezzo = g.mezzaLarghezza * scala * 1.2;
+          this.fondale.ridisegnaDavanti(ctx, g.z, x - mezzo, y - scala, x + mezzo, y + 2);
         },
       });
     }

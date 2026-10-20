@@ -184,8 +184,13 @@ export class Seppia {
         }
       }
     } else if (this.stato === 'scende') {
-      // Si abbassa piano fino a posarsi.
-      if (this.alto < 0.05) {
+      // Si abbassa piano fino a posarsi. Se intanto sotto è arrivato qualcuno,
+      // ci rinuncia e torna su.
+      if (this.alto < 0.6 && this.scontro(this.x, this.z, L, true) !== null) {
+        this.stato = 'sosta';
+        this.attesa = casuale(2, 4);
+        this.altoMeta = casuale(0.8, 1.5);
+      } else if (this.alto < 0.05) {
         this.aTerra = 1;
         this.stato = 'cammina';
         this.passi = 0;

@@ -20,6 +20,7 @@
 import { creaCasuale } from '../util/casuale.js';
 import { Z_SCOGLIO } from './fondale.js';
 import { velaColore, hsl } from '../util/colore.js';
+import { Gorgonia } from './gorgonia.js';
 
 const VELO = 'hsla(188, 32%, 38%, 0.42)';
 
@@ -191,6 +192,10 @@ export class Piante {
     // Dal più lontano al più vicino.
     this.vicine = vicine.map((p) => crea(p, false)).sort((p, q) => p.z - q.z);
     this.lontane = lontane.map((p) => crea(p, true));
+    // Una gorgonia (ventaglio di mare) sulla sabbia, a destra dello scoglio:
+    // la disegnano gli abitanti, insieme agli animali, per l'ordine giusto
+    // davanti/dietro (vedi animali/abitanti.js).
+    this.gorgonie = [new Gorgonia({ roccia: 1, z: fondale.rocce[1].z + 0.005, altezza: 0.26, colore: { h: 292, s: 42, l: 50 }, seme: 31 })];
   }
 
   aggiorna(dt) {
@@ -400,12 +405,14 @@ export class Piante {
 
   // Le piante a ciuffo a cui un animale si può aggrappare (i cavallucci).
   appigli() {
-    return this.vicine.filter((p) => p.foglie && p.z > Z_SCOGLIO);
+    return [...this.vicine.filter((p) => p.foglie && p.z > Z_SCOGLIO), ...this.gorgonie];
   }
 
   // Il punto di una foglia a una certa altezza (s da 0 alla base a 1 in punta),
   // dove si trova in questo istante (le foglie ondeggiano).
+  // (Per la gorgonia "indice" è un nodo dei suoi rami, e s non serve.)
   puntoFoglia(p, indice, s, larghezza, altezza) {
+    if (p.gorgonia) return p.punto(indice, this.fondale, larghezza, altezza, this.tempo);
     const { x, y, scala } = this.base(p, larghezza, altezza);
     const f = this.conScala(p.foglie[indice], scala);
     const segmenti = 9;

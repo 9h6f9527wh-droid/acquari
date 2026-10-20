@@ -7,7 +7,12 @@
 //  - nuota:     per gli spostamenti lunghi nuota "a getto", la testa davanti
 //               e i tentacoli dietro, a spinte;
 //  - riposa:    si ferma e cambia colore per mimetizzarsi con la sabbia;
-//  - torna:     rientra nella grotta.
+//  - raccoglie: ogni tanto, finito il riposo, fruga nella sabbia e trova un
+//               "tesoro" (una conchiglia, un sasso, un pezzo di vetro...) e
+//               se lo porta a casa tra i tentacoli;
+//  - torna:     rientra nella grotta. Se porta un tesoro, prima di entrare
+//               lo posa davanti alla grotta: piano piano davanti alla tana
+//               cresce il suo "giardino", come fanno i polpi veri.
 //  - spavento:  se lo tocchi diventa scuro, spruzza una nuvola d'inchiostro e
 //               scappa a getto nella grotta.
 //
@@ -90,6 +95,18 @@ export class Inchiostro {
   }
 }
 
+// ---------- Il giardino del polpo ----------
+
+// I tesori che può trovare.
+export const TESORI = ['ventaglio', 'chiocciola', 'sasso', 'riccio', 'vetro', 'sasso', 'ventaglio'];
+// I posti del giardino davanti alla grotta: di lato all'ingresso (in
+// larghezze della grotta) e un po' più avanti o più indietro.
+const POSTI = [
+  { u: -0.75, dz: 0.03 }, { u: 0.8, dz: 0.04 }, { u: -1.05, dz: 0.06 }, { u: 1.1, dz: 0.02 },
+  { u: -0.55, dz: 0.08 }, { u: 0.6, dz: 0.07 }, { u: -1.3, dz: 0.03 }, { u: 1.35, dz: 0.06 },
+  { u: -0.9, dz: 0.1 }, { u: 0.95, dz: 0.1 },
+];
+
 // ---------- Il polpo ----------
 
 export class Polpo {
@@ -111,6 +128,32 @@ export class Polpo {
     this.movimento = 0; // quanto si stanno muovendo i tentacoli
     this.inchiostro = new Inchiostro();
     this.braccia = new Zampe(BRACCIA.length, { passo: 0.32, durata: 0.45, alzata: 0.14 });
+    // Il giardino: all'inizio ci sono già tre tesori.
+    this.giardino = [
+      { tipo: 'ventaglio', posto: 0, giro: 0.4 },
+      { tipo: 'sasso', posto: 1, giro: -0.2 },
+      { tipo: 'chiocciola', posto: 2, giro: 1.1 },
+    ];
+    this.porta = null; // il tesoro che ha tra i tentacoli
+  }
+
+  // Dove sta un tesoro del giardino (x, y in punti, z).
+  postoTesoro(t, larghezza, altezza) {
+    const g = this.fondale.scoglio.grotta;
+    const p = POSTI[t.posto];
+    const z = Z_FUORI + p.dz;
+    const x = g.x + p.u * g.rx;
+    return { x, y: this.suolo(x, z, larghezza, altezza), z };
+  }
+
+  // Posa il tesoro che porta nel primo posto libero del giardino (se il
+  // giardino è pieno, toglie il più vecchio: la corrente se l'è portato via).
+  posaTesoro() {
+    if (!this.porta) return;
+    if (this.giardino.length >= POSTI.length) this.giardino.shift();
+    const liberi = POSTI.map((_, i) => i).filter((i) => !this.giardino.some((t) => t.posto === i));
+    this.giardino.push({ tipo: this.porta, posto: liberi[0], giro: Math.random() * 6.3 });
+    this.porta = null;
   }
 
   lunghezza(larghezza, altezza) {
@@ -271,7 +314,10 @@ export class Polpo {
       if (Math.abs(dx) < 1) {
         this.posa = 'terra';
         this.y = terra;
-        if (this.prossimo === 'entra') this.stato = 'entra';
+        if (this.prossimo === 'entra') {
+          this.stato = 'entra';
+          this.posaTesoro();
+        }
         else {
           this.stato = 'riposa';
           this.attesa = casuale(8, 15);
@@ -282,10 +328,23 @@ export class Polpo {
       this.mimetismo = Math.min(1, this.mimetismo + dt * 0.4);
       this.attesa -= dt;
       if (this.attesa <= 0) {
-        const meta = Math.random() < 0.6 ? this.scegliMeta(larghezza, L) : null;
-        if (meta) this.vaiA(meta, larghezza, 'riposa');
-        else this.stato = 'torna';
+        if (!this.porta && Math.random() < 0.45) {
+          // Fruga nella sabbia: ha trovato qualcosa!
+          this.stato = 'raccoglie';
+          this.attesa = 2.5;
+        } else {
+          const meta = Math.random() < 0.6 ? this.scegliMeta(larghezza, L) : null;
+          if (meta) this.vaiA(meta, larghezza, 'riposa');
+          else this.stato = 'torna';
+        }
       }
+    } else if (this.stato === 'raccoglie') {
+      // Le braccia frugano (si muovono sul posto) e a metà prende il tesoro.
+      this.attesa -= dt;
+      muove = 0.5;
+      if (this.attesa < 1.2 && !this.porta) this.porta = TESORI[Math.floor(Math.random() * TESORI.length)];
+      // Contento, se lo porta subito a casa.
+      if (this.attesa <= 0) this.stato = 'torna';
     } else if (this.stato === 'torna') {
       // Torna alla grotta: se strisciando dovrebbe passare attraverso un
       // oggetto, ci va a nuoto passandoci sopra.

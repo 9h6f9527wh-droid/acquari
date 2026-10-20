@@ -60,6 +60,14 @@ export class Cavallucci {
   // Due foglie dello stesso ciuffo, una per lato (così stanno vicini ma non
   // uno sopra l'altro), scegliendo le più dritte: sono le più comode.
   presePer(pianta) {
+    if (pianta.gorgonia) {
+      // Sulla gorgonia: due rami a metà altezza, uno per lato.
+      const [a, b] = pianta.prese();
+      return [
+        { pianta, foglia: a, s: 0, lato: -0.5 },
+        { pianta, foglia: b, s: 0, lato: 0.5 },
+      ];
+    }
     const n = pianta.foglie.length;
     const dritta = (i) => Math.abs(pianta.foglie[i].angolo + pianta.foglie[i].curvatura * 0.5);
     const migliore = (da, a) => {
@@ -87,7 +95,7 @@ export class Cavallucci {
   aggrappa(prese) {
     this.coppia.forEach((c, i) => {
       c.presa = prese[i];
-      c.z = prese[i].pianta.z;
+      c.z = prese[i].pianta.z + 0.01; // un filo davanti alla sua pianta
       c.meta = null;
     });
   }
@@ -224,10 +232,10 @@ export class Cavallucci {
         const fondo = this.fondale.profondita(Math.min(1, Math.max(0, c.x / larghezza)), c.z) * altezza;
         if (Math.abs(meta.x - c.x) > L * 1.5) meta = { x: meta.x, y: Math.min(meta.y, fondo - L * 1.6) };
         // La profondità cambia piano piano verso quella del ciuffo.
-        c.z += (presa.pianta.z - c.z) * Math.min(1, dt * 0.3);
+        c.z += (presa.pianta.z + 0.01 - c.z) * Math.min(1, dt * 0.3);
         if (Math.hypot(posto.x - c.x, posto.y - c.y) < L * 0.15 && meta === posto) {
           c.presa = presa;
-          c.z = presa.pianta.z;
+          c.z = presa.pianta.z + 0.01;
         }
         if (Math.abs(meta.x - c.x) > L * 0.2) c.verso = Math.sign(meta.x - c.x);
       }

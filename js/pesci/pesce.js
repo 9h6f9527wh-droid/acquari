@@ -56,6 +56,14 @@ export class Pesce {
     this.obiettivo = null;
     this.comportamento = null;
     this.tempoBattito = 0;
+    this.gonfio = 0; // solo per il pesce palla: 0 = normale, 1 = gonfio come un pallone
+    this.restaGonfio = 0;
+  }
+
+  // Il pesce palla si gonfia (resta gonfio qualche secondo, poi si sgonfia piano).
+  gonfia() {
+    if (!this.specie.gonfiabile) return;
+    this.restaGonfio = casuale(4, 6);
   }
 
   // Lunghezza del pesce in punti, alla sua profondità attuale.
@@ -311,6 +319,15 @@ export class Pesce {
       if (this.tempoScatto <= 0) this.velocitaVoluta = n.crociera * (ob.lento ? 0.45 : 1);
     }
     let voluta = this.velocitaVoluta * Math.min(1, Math.max(0.15, distanza / (L * 3)));
+    // Gonfio, il pesce palla quasi non riesce a nuotare: galleggia e sale un po'.
+    if (this.specie.gonfiabile) {
+      if (this.restaGonfio > 0) {
+        this.restaGonfio -= dt;
+        this.gonfio = Math.min(1, this.gonfio + dt * 2.2); // si gonfia in fretta
+      } else this.gonfio = Math.max(0, this.gonfio - dt * 0.3); // e si sgonfia piano
+      voluta *= 1 - this.gonfio * 0.85;
+      this.y -= this.gonfio * L * 0.08 * dt;
+    }
     if (staGirando) voluta *= 0.35;
     if (ob.attraversa) voluta = 0.3;
     if (ob.fermo) voluta = Math.min(voluta, 0.1);

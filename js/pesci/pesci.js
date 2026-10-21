@@ -18,7 +18,19 @@ export class Pesci {
     this.fondale.controllaMisure(larghezza, altezza);
     if (this.lista.length === 0) this.popola(larghezza, altezza);
     for (const b of this.banchi) b.aggiorna(dt, larghezza, altezza);
-    for (const p of this.lista) p.aggiorna(dt, larghezza, altezza);
+    for (const p of this.lista) {
+      // Se in lontananza passa un grosso predatore, il pesce palla si spaventa
+      // (una volta per ogni passaggio, e non subito: prima deve accorgersene).
+      if (p.specie.gonfiabile && this.pericolo && this.pericolo !== p.ultimoPericolo) {
+        p.allarme = (p.allarme || 0) + dt;
+        if (p.allarme > 2.5) {
+          p.ultimoPericolo = this.pericolo;
+          p.allarme = 0;
+          p.gonfia();
+        }
+      }
+      p.aggiorna(dt, larghezza, altezza);
+    }
   }
 
   // Gli abitanti di partenza (più avanti li comprerai nel negozio).
@@ -37,6 +49,21 @@ export class Pesci {
     const banco = new Banco(this.fondale);
     for (let i = 0; i < 5; i++) banco.aggiungi(nuovo(SPECIE.banggai));
     this.banchi.push(banco);
+    // Il pesce palla.
+    nuovo(SPECIE.palla);
+  }
+
+  // Un tocco sullo schermo: il pesce palla, se lo tocchi, si gonfia.
+  tocco(x, y, larghezza, altezza) {
+    for (const p of this.lista) {
+      if (!p.specie.gonfiabile) continue;
+      const L = p.lunghezza(larghezza, altezza);
+      if (Math.hypot(x - p.x, y - p.y) < L * 0.7) {
+        p.gonfia();
+        return true;
+      }
+    }
+    return false;
   }
 
   // Disegna i pesci di uno strato, dal più lontano al più vicino.

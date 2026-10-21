@@ -62,11 +62,18 @@ export function disegnaPesce(ctx, pesce, larghezza, altezza) {
   const spina = [];
   for (let i = 0; i <= PUNTI; i++) {
     const s = i / PUNTI;
+    let h = profilo(sp, s) * H * 0.5;
+    // Il pesce palla gonfio diventa quasi una palla: il profilo si arrotonda
+    // fino a un cerchio (ma l'attacco della coda resta stretto).
+    if (pesce.gonfio > 0) {
+      const tondo = Math.sqrt(Math.max(0, 1 - (2 * Math.min(s, 0.97) - 1) ** 2)) * Lc * 0.5;
+      h += (Math.max(tondo, h * 0.7) - h) * pesce.gonfio;
+    }
     spina.push({
       s,
       x: Lc / 2 - s * Lc,
       y: Math.sin(t - s * 2.6) * onda * s * s * L * 0.07,
-      h: profilo(sp, s) * H * 0.5,
+      h,
     });
   }
   const coda = spina[PUNTI];
@@ -162,6 +169,24 @@ export function disegnaPesce(ctx, pesce, larghezza, altezza) {
   ctx.strokeStyle = hsl(colori.bordi, 0, 0.4);
   ctx.lineWidth = bordo * 0.5;
   ctx.stroke();
+
+  // Le spine del pesce palla: quando si gonfia spuntano tutto intorno al corpo.
+  if (pesce.gonfio > 0.15) {
+    const lunga = L * 0.065 * (pesce.gonfio - 0.15) / 0.85;
+    ctx.strokeStyle = hsl(colori.corpo, -18, 0.9);
+    ctx.lineWidth = Math.max(0.6, L * 0.008);
+    ctx.beginPath();
+    for (let i = 2; i < PUNTI - 1; i++) {
+      for (const lato of [-1, 1]) {
+        const p = spina[i];
+        const y = p.y + lato * p.h * (lato > 0 ? 0.95 : 1);
+        // Verso l'esterno e un po' all'indietro (la testa è verso x positivo).
+        ctx.moveTo(p.x, y);
+        ctx.lineTo(p.x - lunga * 0.4, y + lato * lunga);
+      }
+    }
+    ctx.stroke();
+  }
 
   // "Bisturi" del pesce chirurgo: una piccola spina gialla vicino alla coda.
   if (sp.bisturi) {

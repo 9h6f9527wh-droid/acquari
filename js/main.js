@@ -40,7 +40,7 @@ window.acquario = { fondale, pesci, abitanti };
 
 // Tocchi sullo schermo: li passiamo agli abitanti (polpo, seppia e nudibranchi reagiscono).
 canvas.addEventListener('pointerdown', (evento) => {
-  abitanti.tocco(evento.clientX, evento.clientY, larghezza, altezza);
+  abitanti.tocco(evento.clientX, evento.clientY, larghezza, altezza) || pesci.tocco(evento.clientX, evento.clientY, larghezza, altezza);
 });
 
 function adattaAlloSchermo() {
@@ -62,6 +62,9 @@ function aggiorna(dt) {
   piante.aggiorna(dt);
   caustiche.aggiorna(dt);
   bolle.aggiorna(dt, larghezza, altezza, fondale);
+  // Il pesce palla si spaventa se in lontananza passa un grosso predatore.
+  const passante = lontananza.attivo && lontananza.attivo.tipo;
+  pesci.pericolo = ['squalo', 'martello', 'orche'].includes(passante) ? lontananza.attivo : null;
   pesci.aggiorna(dt, larghezza, altezza);
   lontananza.aggiorna(dt, larghezza, altezza);
   abitanti.aggiorna(dt, larghezza, altezza);

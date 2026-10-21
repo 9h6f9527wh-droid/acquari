@@ -185,4 +185,44 @@ export const SPECIE = {
     // Vive in un piccolo gruppo (vedi banco.js): stanno vicini e si muovono insieme.
     comportamenti: { banco: 1 },
   },
+
+  palla: {
+    nome: 'Pesce palla',
+    lunghezza: 0.08,
+    altezza: 0.56,
+    // Testa grossa e tonda, muso corto, il corpo si stringe molto verso la coda.
+    profilo: [
+      [0, 0.3], [0.03, 0.62], [0.12, 0.88], [0.32, 1.0], [0.52, 0.94],
+      [0.72, 0.64], [0.88, 0.36], [1, 0.27],
+    ],
+    colori: {
+      corpo: { h: 44, s: 42, l: 60 },
+      ventre: { h: 48, s: 30, l: 92 },
+      macchie: { h: 28, s: 45, l: 22 },
+      bordi: { h: 30, s: 35, l: 16 },
+      pinne: { h: 42, s: 40, l: 66 },
+      coda: { h: 40, s: 40, l: 60 },
+      occhio: { h: 150, s: 35, l: 32 },
+    },
+    pinne: {
+      // Il pesce palla ha pinne piccole, tutte in fondo; niente pinne ventrali.
+      dorsali: [{ da: 0.7, a: 0.82, altezza: 0.3, forma: 'lunga', piega: 0.4 }],
+      anali: [{ da: 0.7, a: 0.82, altezza: 0.28, forma: 'lunga', piega: 0.4 }],
+      coda: { forma: 'ventaglio', lunghezza: 0.22 },
+    },
+    decori: [
+      { tipo: 'puntini', colore: 'macchie', elenco: puntini(31, 60, 0.08, 1.0, -0.95, 0.4, 0.013) },
+    ],
+    occhio: { dove: 0.14, misura: 0.15 },
+    nuoto: {
+      crociera: 0.6, // goffo e lento: si muove remando con le pinnette
+      scatto: 1.2,
+      virata: 0.9,
+      battito: 4.5,
+      dimenio: 0.25,
+    },
+    // Se lo tocchi (o se passa uno squalo in lontananza) si gonfia come un pallone.
+    gonfiabile: true,
+    comportamenti: { vaga: 0.45, perlustra: 0.3, inAlto: 0.12, pulizia: 0.13 },
+  },
 };

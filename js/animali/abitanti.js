@@ -10,11 +10,13 @@ import { Paguro, CONCHIGLIE } from './paguro.js';
 import { Polpo } from './polpo.js';
 import { Cavallucci } from './cavallucci.js';
 import { Seppia } from './seppia.js';
+import { Nudibranchi } from './nudibranchi.js';
 import { disegnaGambero, disegnaPaguro, disegnaConchiglia } from '../disegno/invertebrati.js';
 import { disegnaPolpo } from '../disegno/polpo.js';
 import { disegnaCavalluccio } from '../disegno/cavalluccio.js';
 import { disegnaSeppia } from '../disegno/seppia.js';
 import { disegnaTesoro } from '../disegno/tesori.js';
+import { disegnaNudibranco } from '../disegno/nudibranco.js';
 
 // Due animali a meno di questa differenza di profondità si scontrano.
 const SPESSORE_ANIMALI = 0.1;
@@ -25,6 +27,7 @@ export class Abitanti {
     this.piante = piante;
     this.cavallucci = new Cavallucci(fondale, piante);
     this.seppia = new Seppia(fondale);
+    this.nudibranchi = new Nudibranchi(fondale);
     this.gambero = new Gambero(fondale);
     this.paguro = new Paguro(fondale);
     this.polpo = new Polpo(fondale);
@@ -32,7 +35,11 @@ export class Abitanti {
 
   // Un tocco sullo schermo: il polpo e la seppia si spaventano.
   tocco(x, y, larghezza, altezza) {
-    return this.polpo.tocco(x, y, larghezza, altezza) || this.seppia.tocco(x, y, larghezza, altezza);
+    return (
+      this.polpo.tocco(x, y, larghezza, altezza) ||
+      this.seppia.tocco(x, y, larghezza, altezza) ||
+      this.nudibranchi.tocco(x, y, larghezza, altezza)
+    );
   }
 
   // Il polpo dentro la grotta (va disegnato tra i due fogli dello scoglio).
@@ -99,6 +106,7 @@ export class Abitanti {
     elenco = this.aTerra(larghezza, altezza);
     this.seppia.aggiorna(dt, larghezza, altezza);
     this.cavallucci.aggiorna(dt, larghezza, altezza);
+    this.nudibranchi.aggiorna(dt, larghezza, altezza);
   }
 
   disegna(ctx, larghezza, altezza) {
@@ -197,6 +205,17 @@ export class Abitanti {
           const { x, y, scala } = g.base(this.fondale, larghezza, altezza);
           const mezzo = g.mezzaLarghezza * scala * 1.2;
           this.fondale.ridisegnaDavanti(ctx, g.z, x - mezzo, y - scala, x + mezzo, y + 2);
+        },
+      });
+    }
+    for (const n of this.nudibranchi.lista) {
+      if (n.x === null) continue;
+      disegni.push({
+        z: n.z,
+        fai: () => {
+          const Ln = n.lunghezza(larghezza, altezza);
+          disegnaNudibranco(ctx, n, Ln);
+          this.fondale.ridisegnaDavanti(ctx, n.z, n.x - Ln, n.y - Ln * 0.5, n.x + Ln, n.y + Ln * 0.1);
         },
       });
     }

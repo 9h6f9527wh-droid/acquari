@@ -38,7 +38,7 @@ const abitanti = new Abitanti(fondale, piante);
 // (non cambia nulla nel gioco).
 window.acquario = { fondale, pesci, abitanti };
 
-// Tocchi sullo schermo: li passiamo agli abitanti (il polpo si spaventa).
+// Tocchi sullo schermo: li passiamo agli abitanti (polpo, seppia e nudibranchi reagiscono).
 canvas.addEventListener('pointerdown', (evento) => {
   abitanti.tocco(evento.clientX, evento.clientY, larghezza, altezza);
 });
